@@ -4,8 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MiuixSharp — 把 Miuix 的设计语言搬进 WinForms</title>
+<meta name="description" content="MiuixSharp 是一个 .NET 8 / WinForms 控件库，用纯 C# 复现 Miuix 的设计语言：24 个自绘控件、51 个颜色角色、14 种文字样式，度量以 dp 表达，缩放 1.0-5.0 跟随显示器 DPI。">
+<meta name="theme-color" content="#F7F7F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MiuixSharp — 把 Miuix 的设计语言搬进 WinForms">
+<meta property="og:description" content="纯 C# 复现 Miuix 视觉：24 个控件、51 个颜色角色、DPI 自适应。">
+<meta property="og:image" content="showcase_light.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233482FF'/%3E%3Crect x='7' y='7' width='8' height='8' rx='3' fill='white'/%3E%3Crect x='17' y='17' width='8' height='8' rx='3' fill='white' opacity='.65'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
 <style>
 :root{
   --primary:#3482FF; --on-primary:#FFFFFF; --primary-container:#5D9BFF;
@@ -64,7 +71,7 @@ a:hover{border-bottom-color:var(--primary)}
 .hero{padding:64px 0 40px}
 .eyebrow{font-size:13px;color:var(--muted);letter-spacing:.06em}
 h1{font-size:clamp(40px,7vw,76px);line-height:1.02;margin:14px 0 0;
-  font-weight:900;letter-spacing:-.03em}
+  font-weight:800;letter-spacing:-.03em}
 h1 .thin{font-weight:300;color:var(--muted)}
 .lede{margin:22px 0 0;max-width:34em;font-size:18px;line-height:1.85;color:var(--on-bg)}
 .facts{margin-top:34px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6A2F0AD0-1939-4915-9232-1F3EAF3AC138}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiuixSharp", "src\MiuixSharp\MiuixSharp.csproj", "{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{F76B4D04-1AD0-4DE6-8215-1EBBD66D4A91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiuixSharp.Showcase", "samples\MiuixSharp.Showcase\MiuixSharp.Showcase.csproj", "{527CD930-4347-45C0-B843-FE04CE030BF3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859}.Release|Any CPU.Build.0 = Release|Any CPU
+		{527CD930-4347-45C0-B843-FE04CE030BF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{527CD930-4347-45C0-B843-FE04CE030BF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{527CD930-4347-45C0-B843-FE04CE030BF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{527CD930-4347-45C0-B843-FE04CE030BF3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8BE1A411-77D6-4121-BFDB-ECC2AD5CE859} = {6A2F0AD0-1939-4915-9232-1F3EAF3AC138}
+		{527CD930-4347-45C0-B843-FE04CE030BF3} = {F76B4D04-1AD0-4DE6-8215-1EBBD66D4A91}
+	EndGlobalSection
+EndGlobal

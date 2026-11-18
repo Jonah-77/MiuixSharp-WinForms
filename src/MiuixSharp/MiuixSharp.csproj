@@ -16,4 +16,17 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>MiuixSharp</PackageId>
+    <PackageProjectUrl>https://github.com/Jonah-77/MiuixSharp-WinForms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Jonah-77/MiuixSharp-WinForms</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>winforms;miuix;ui;controls;rounded;squircle;high-dpi</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
 </Project>

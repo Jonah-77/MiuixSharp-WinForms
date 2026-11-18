@@ -14,6 +14,8 @@ A Miuix-inspired control library for **WinForms on .NET 8** — rounded cards, t
 |:---:|:---:|
 | ![light](docs/showcase_light.png) | ![dark](docs/showcase_dark.png) |
 
+Live feature page (GitHub Pages): **https://jonah-77.github.io/MiuixSharp-WinForms/**
+
 ## Why
 
 WinForms controls still look like Windows 95. If you want a modern, soft, "Xiaomi HyperOS" feel —
@@ -199,6 +201,7 @@ src/MiuixSharp/
              TitleBar (DWM title-bar recolouring)
 samples/MiuixSharp.Showcase/   Live demo used for the screenshots above
 docs/REPRODUCTION.md           Fidelity audit
+docs/index.html                Feature page published to GitHub Pages
 docs/*.png                     Light & dark screenshots
 项目说明与交接文档.md            Chinese hand-over doc: design decisions, pitfalls, checklist
 ```

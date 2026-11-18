@@ -85,7 +85,8 @@ bitmap stretching.
 | Text | specified in **pt**, so the OS scales it with the DPI — no manual conversion |
 | Hairlines | floor of 0.75 px (`MiuTheme.Dpf()`), so a 0.75 dp divider stays visible at 100% |
 | Window | size it in dp too (`MiuTheme.Dp(1020)`), otherwise high-DPI content overflows a fixed window |
-| Live changes | `MiuDpi.Watch(form)` hooks `DpiChanged`; every live control re-measures and repaints |
+| Live changes | `MiuDpi.Watch(form)` hooks `DpiChanged`; controls repaint and WinForms re-lays the form |
+| Metrics at runtime | sizes fixed in a constructor (`MiuSwitch`, `MiuSlider` height, `MiuProgressIndicator`) use the scale in force **when they are created**; set the scale before building the UI, or rebuild controls after changing it |
 
 ```csharp
 public MainForm()

@@ -26,6 +26,8 @@ public class MiuThumb : Control
         BackColor = Color.Transparent;
         Cursor = Cursors.Hand;
         UpdateRegion();
+        // Repaint on theme switches: the fill/placeholder resolve from the live theme.
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     /// <summary>Corner radius in pixels.</summary>
@@ -56,14 +58,24 @@ public class MiuThumb : Control
         set { _dropActive = value; Invalidate(); }
     }
 
-    /// <summary>Fill behind the picture (Miuix surfaceContainerHigh).</summary>
-    public Color SurfaceColor { get; set; } = MiuTheme.Colors.SurfaceContainerHigh;
+    /// <summary>Fill behind the picture (Miuix surfaceContainerHigh). Follows the theme unless set explicitly.</summary>
+    public Color SurfaceColor
+    {
+        get => _surfaceColor ?? MiuTheme.Colors.SurfaceContainerHigh;
+        set { _surfaceColor = value; Invalidate(); }
+    }
+    private Color? _surfaceColor;
 
     /// <summary>Font used for <see cref="Placeholder"/>. Lets callers draw a large "+" in an empty slot.</summary>
     public Font PlaceholderFont { get; set; } = MiuTheme.Font;
 
-    /// <summary>Colour used for <see cref="Placeholder"/>.</summary>
-    public Color PlaceholderColor { get; set; } = MiuTheme.TextSecondary;
+    /// <summary>Colour used for <see cref="Placeholder"/>. Follows the theme unless set explicitly.</summary>
+    public Color PlaceholderColor
+    {
+        get => _placeholderColor ?? MiuTheme.TextSecondary;
+        set { _placeholderColor = value; Invalidate(); }
+    }
+    private Color? _placeholderColor;
 
     protected override void OnResize(EventArgs e)
     {
@@ -74,8 +86,7 @@ public class MiuThumb : Control
     private void UpdateRegion()
     {
         if (Width < 2 || Height < 2) return;
-        using var path = RoundedPath.Rect(new Rectangle(0, 0, Width, Height), MiuTheme.Dp(_radius));
-        Region = new Region(path);
+        RoundedPath.ApplyRegion(this, MiuTheme.Dp(_radius));
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -112,7 +123,8 @@ public class MiuThumb : Control
             {
                 using var pen = new Pen(MiuTheme.Primary, 2f);
                 var inner = new Rectangle(1, 1, Width - 3, Height - 3);
-                g.DrawPath(pen, RoundedPath.Rect(inner, Math.Max(0, MiuTheme.Dp(_radius) - 1)));
+                using var innerPath = RoundedPath.Rect(inner, Math.Max(0, MiuTheme.Dp(_radius) - 1));
+                g.DrawPath(pen, innerPath);
             }
         }
     }

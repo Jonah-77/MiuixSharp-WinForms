@@ -27,7 +27,7 @@ public class MiuIconButton : Control
         Size = new Size(MiuTheme.Dp(40), MiuTheme.Dp(40)); // IconButtonDefaults Size = 40dp
         Cursor = Cursors.Hand;
         Font = new Font("Segoe UI Symbol", 14F);
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     public MiuButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
@@ -54,7 +54,7 @@ public class MiuIconButton : Control
         {
             if (back != Color.Transparent) using (var b = new SolidBrush(back)) g.FillPath(b, p);
         }
-        var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+        using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         using var tb = new SolidBrush(fore);
         g.DrawString(Text, Font, tb, rect, sf);
     }

@@ -33,8 +33,14 @@ public static class MiuTheme
     public static MiuMode Mode
     {
         get => _mode;
-        set { _mode = value; Changed?.Invoke(null, EventArgs.Empty); }
+        set { _mode = value; _darkCacheAt = long.MinValue; Changed?.Invoke(null, EventArgs.Empty); }
     }
+
+    // Resolving System mode reads the registry, and Colors is consulted from every paint
+    // path. Cache the answer briefly instead of hitting HKCU on each repaint; the 1 s window
+    // still follows the user flipping the Windows setting.
+    private static bool _darkCache;
+    private static long _darkCacheAt = long.MinValue;
 
     /// <summary>True when dark colors are active (resolves System via Windows setting).</summary>
     public static bool IsDark
@@ -43,15 +49,26 @@ public static class MiuTheme
         {
             if (_mode == MiuMode.Dark) return true;
             if (_mode == MiuMode.Light) return false;
-            try
-            {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-                var v = key?.GetValue("AppsUseLightTheme");
-                return v is int i && i == 0;
-            }
-            catch { return false; }
+
+            long now = Environment.TickCount64;
+            if (_darkCacheAt != long.MinValue && now - _darkCacheAt < 1000) return _darkCache;
+
+            _darkCache = ReadSystemDark();
+            _darkCacheAt = now;
+            return _darkCache;
         }
+    }
+
+    private static bool ReadSystemDark()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            var v = key?.GetValue("AppsUseLightTheme");
+            return v is int i && i == 0;
+        }
+        catch { return false; }
     }
 
     /// <summary>Active color scheme (respects current resolved mode).</summary>

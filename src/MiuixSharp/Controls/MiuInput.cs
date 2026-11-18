@@ -56,12 +56,13 @@ public class MiuInput : MiuField
         _box.KeyDown += BoxKeyDown;
         Controls.Add(_box);
 
-        MiuTheme.Changed += (_, __) =>
+        MiuThemeHook.Attach(this, () =>
         {
             _box.Font = MiuTheme.Font;
             _box.ForeColor = MiuTheme.Text;
             _box.BackColor = MiuTheme.Colors.SecondaryContainer;
-        };
+            Invalidate();
+        });
     }
 
     /// <summary>

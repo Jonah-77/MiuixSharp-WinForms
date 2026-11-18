@@ -43,7 +43,7 @@ public class MiuGrid : DataGridView
         DefaultCellStyle.SelectionForeColor = MiuTheme.Text;
         DefaultCellStyle.Padding = new Padding(6, 0, 4, 0);
 
-        MiuTheme.Changed += (_, __) => ApplyTheme();
+        MiuThemeHook.Attach(this, () => ApplyTheme());
     }
 
     private void ApplyTheme()

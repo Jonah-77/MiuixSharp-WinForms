@@ -20,13 +20,22 @@ public class MiuSwitch : Control
         BackColor = Color.Transparent;
         Width = MiuTheme.Dp(46); Height = MiuTheme.Dp(26);
         Cursor = Cursors.Hand;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     public bool Checked
     {
         get => _on;
-        set { _on = value; _anim = value ? 1 : 0; Invalidate(); OnCheckedChanged(EventArgs.Empty); }
+        set
+        {
+            // Re-assigning the same value must not raise CheckedChanged (two-way bindings
+            // set Checked from their own handler and would otherwise loop).
+            if (_on == value) return;
+            _on = value;
+            _anim = value ? 1 : 0;
+            Invalidate();
+            OnCheckedChanged(EventArgs.Empty);
+        }
     }
 
     public event EventHandler CheckedChanged;

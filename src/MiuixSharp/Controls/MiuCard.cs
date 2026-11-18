@@ -23,7 +23,7 @@ public class MiuCard : UserControl
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
                  ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
         Padding = new Padding(Pad);
     }
 
@@ -49,7 +49,9 @@ public class MiuCard : UserControl
         if (cardRect.Width <= 0 || cardRect.Height <= 0) return;
 
         // Soft shadow: a few offset translucent rounded fills beneath the card.
-        if (_shadow > 0 && MiuTheme.Mode == MiuMode.Light)
+        // A shadow is a light-theme affordance: in dark mode the card floats by surface layering.
+        // Resolve System mode through IsDark instead of comparing Mode == Light.
+        if (_shadow > 0 && !MiuTheme.IsDark)
         {
             for (int i = _shadow; i >= 1; i--)
             {

@@ -34,13 +34,20 @@ public class MiuScrollArea : Panel
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
         BackColor = Color.Transparent;
         AutoScroll = false;
+        // The indicator is drawn from ThumbColor, which resolves the live theme role.
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     /// <summary>The scrollable child. Only one is supported.</summary>
     public Control Content => _content;
 
-    /// <summary>Colour of the thin scroll indicator.</summary>
-    public Color ThumbColor { get; set; } = MiuTheme.Colors.OnSurfaceVariantActions;
+    /// <summary>Colour of the thin scroll indicator. Follows the theme unless set explicitly.</summary>
+    public Color ThumbColor
+    {
+        get => _thumbColor ?? MiuTheme.Colors.OnSurfaceVariantActions;
+        set { _thumbColor = value; Invalidate(); }
+    }
+    private Color? _thumbColor;
 
     /// <summary>Attach the scrollable content.</summary>
     public void SetContent(Control content)

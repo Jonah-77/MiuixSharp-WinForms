@@ -25,7 +25,7 @@ public class MiuButton : Control
         Cursor = Cursors.Hand;
         Font = MiuTheme.Font;
         ForeColor = MiuTheme.Text;
-        MiuTheme.Changed += (_, __) => { UpdateColors(); ApplyMetrics(); Invalidate(); };
+        MiuThemeHook.Attach(this, () => { UpdateColors(); ApplyMetrics(); Invalidate(); });
         ApplyMetrics();
         UpdateColors();
 
@@ -109,7 +109,7 @@ public class MiuButton : Control
                 using (var pen = new Pen(_border, MiuTheme.Dpf(1))) g.DrawPath(pen, path);
         }
 
-        var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+        using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
         var textRect = Rectangle.Inflate(rect, -Padding.Left / 2, -2);
         using var tb = new SolidBrush(Enabled ? _baseFore : MiuTheme.TextSecondary);
         g.DrawString(Text, Font, tb, textRect, sf);

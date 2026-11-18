@@ -21,7 +21,7 @@ public class MiuSurface : Panel
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
         BackColor = Color.Transparent;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
         UpdateRegion();
     }
 
@@ -42,8 +42,9 @@ public class MiuSurface : Panel
     private void UpdateRegion()
     {
         if (Width < 2 || Height < 2) return;
-        using var path = RoundedPath.Rect(new Rectangle(0, 0, Width, Height), MiuTheme.Dp(_radius));
-        Region = new Region(path);
+        // ApplyRegion disposes the previous Region; assigning Region directly leaks a GDI
+        // region on every resize.
+        RoundedPath.ApplyRegion(this, MiuTheme.Dp(_radius));
     }
 
     protected override void OnPaint(PaintEventArgs e)

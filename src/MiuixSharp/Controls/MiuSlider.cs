@@ -25,16 +25,28 @@ public class MiuSlider : Control
         BackColor = Color.Transparent;
         Height = MiuTheme.Dp(28); // SliderDefaults.MinHeight = 28dp
         Cursor = Cursors.Hand;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
+
+    // Minimum/Maximum can be set in any order (Minimum = 50 then Maximum = 40, or a caller
+    // passing Min > Max). Math.Clamp throws when min > max, so clamp against the sorted pair.
+    private int Lo => Math.Min(_min, _max);
+    private int Hi => Math.Max(_min, _max);
 
     public int Value
     {
         get => _value;
-        set { _value = Math.Clamp(value, _min, _max); Invalidate(); ValueChanged?.Invoke(this, EventArgs.Empty); }
+        set
+        {
+            int clamped = Math.Clamp(value, Lo, Hi);
+            if (clamped == _value) { Invalidate(); return; }
+            _value = clamped;
+            Invalidate();
+            ValueChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
-    public int Minimum { get => _min; set { _min = value; _value = Math.Clamp(_value, _min, _max); Invalidate(); } }
-    public int Maximum { get => _max; set { _max = value; _value = Math.Clamp(_value, _min, _max); Invalidate(); } }
+    public int Minimum { get => _min; set { _min = value; _value = Math.Clamp(_value, Lo, Hi); Invalidate(); } }
+    public int Maximum { get => _max; set { _max = value; _value = Math.Clamp(_value, Lo, Hi); Invalidate(); } }
     public List<int> KeyPoints => _keyPoints;
     /// <summary>Whether to show key-point indicators (Miuix showKeyPoints, default false).</summary>
     public bool ShowKeyPoints { get; set; } = true;
@@ -48,11 +60,11 @@ public class MiuSlider : Control
         int w = Width - 20;
         if (w <= 0) return _min;
         double ratio = Math.Clamp((x - 10) / (double)w, 0, 1);
-        int raw = _min + (int)Math.Round(ratio * (_max - _min));
+        int raw = Lo + (int)Math.Round(ratio * (Hi - Lo));
         // Magnetic snap to key points (Miuix magnetThreshold).
-        if (_keyPoints.Count > 0 && MagnetThreshold > 0 && (_max - _min) > 0)
+        if (_keyPoints.Count > 0 && MagnetThreshold > 0 && (Hi - Lo) > 0)
         {
-            double span = (_max - _min) * MagnetThreshold;
+            double span = (Hi - Lo) * MagnetThreshold;
             var nearest = _keyPoints.OrderBy(k => Math.Abs(k - raw)).First();
             if (Math.Abs(nearest - raw) <= span) return nearest;
         }
@@ -76,7 +88,7 @@ public class MiuSlider : Control
         g.SmoothingMode = SmoothingMode.AntiAlias;
         int cy = Height / 2;
         int x0 = MiuTheme.Dp(10), x1 = Width - MiuTheme.Dp(10), w = x1 - x0;
-        double ratio = (_max - _min) == 0 ? 0 : (_value - _min) / (double)(_max - _min);
+        double ratio = (Hi - Lo) == 0 ? 0 : (_value - Lo) / (double)(Hi - Lo);
         int thumbX = x0 + (int)Math.Round(ratio * w);
 
         // inactive track
@@ -92,7 +104,7 @@ public class MiuSlider : Control
             float kpr = MiuTheme.Dpf(3.855f);
             foreach (var kp in _keyPoints)
             {
-                double r = (_max - _min) == 0 ? 0 : (kp - _min) / (double)(_max - _min);
+                double r = (Hi - Lo) == 0 ? 0 : (kp - Lo) / (double)(Hi - Lo);
                 int kx = x0 + (int)Math.Round(r * w);
                 using var b = new SolidBrush(MiuTheme.Colors.SliderKeyPointForeground);
                 g.FillEllipse(b, kx - kpr, cy - kpr, kpr * 2, kpr * 2);

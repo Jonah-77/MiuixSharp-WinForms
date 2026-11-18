@@ -18,7 +18,7 @@ public class MiuRadioButton : Control
         BackColor = Color.Transparent;
         Size = new Size(MiuTheme.Dp(20), MiuTheme.Dp(20));
         Cursor = Cursors.Hand;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     public bool Checked

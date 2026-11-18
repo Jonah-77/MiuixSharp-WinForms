@@ -29,7 +29,7 @@ public class MiuWinButton : Button
         Font = MiuTheme.Font;
         Cursor = Cursors.Hand;
         Padding = new Padding(6, 0, 6, 0);
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
         // Clip to rounded region so no native square focus frame / corners leak through.
         HandleCreated += (_, __) => ApplyRegion();
         Resize += (_, __) => ApplyRegion();
@@ -95,7 +95,7 @@ public class MiuWinButton : Button
             if (back != Color.Transparent) using (var b = new SolidBrush(back)) g.FillPath(b, path);
             if (border != Color.Transparent) using (var pen = new Pen(border, 1)) g.DrawPath(pen, path);
         }
-        var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
+        using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
         using var tb = new SolidBrush(Enabled ? fore : MiuTheme.Colors.DisabledOnSurface);
         g.DrawString(Text, Font, tb, rect, sf);
     }

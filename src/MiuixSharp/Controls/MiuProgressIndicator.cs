@@ -23,7 +23,7 @@ public class MiuProgressIndicator : Control
         Size = new Size(MiuTheme.Dp(40), MiuTheme.Dp(40));
         _timer = new System.Windows.Forms.Timer { Interval = 30 };
         _timer.Tick += (_, __) => { _spin = (_spin + 12) % 360; Invalidate(); };
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
         Disposed += (_, __) => _timer.Dispose();
     }
 

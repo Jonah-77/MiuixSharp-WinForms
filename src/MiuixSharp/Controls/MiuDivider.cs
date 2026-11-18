@@ -20,7 +20,7 @@ public class MiuDivider : Control
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
                  ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     public MiuDividerOrientation Orientation

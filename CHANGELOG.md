@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.4.1
+
+Code review pass over the whole library. No API changes; behaviour fixes only.
+
+**Fixes**
+
+- `MiuTheme.Changed` is a static event, and 16 controls subscribed with a one-line lambda in
+  their constructor — the static delegate list kept every control alive after `Dispose()`,
+  and a disposed control kept receiving repaints (`MiuButton`'s handler even set `Height`).
+  Subscriptions now go through `MiuThemeHook.Attach`, which unhooks on `Disposed` and
+  ignores callbacks for disposed controls.
+- `MiuSlider` threw `ArgumentException` whenever `Minimum` was set above `Maximum`
+  (`Math.Clamp` requires `min <= max`); `Value`/`Minimum`/`Maximum` and the paint/geometry
+  math now clamp against the sorted pair. `Value` also stopped raising `ValueChanged`
+  when the clamped value did not actually change (dragging past either end used to fire
+  on every mouse move).
+- `MiuSwitch.Checked` raised `CheckedChanged` even when the value was unchanged, which
+  ping-pongs in two-way bindings.
+- GDI leaks per paint/resize: `StringFormat` in `MiuButton`, `MiuChip`, `MiuIconButton`,
+  `MiuWinButton`; a `GraphicsPath` in `MiuThumb`'s drop border; and three `UpdateRegion`
+  implementations (`MiuSurface`, `MiuThumb`, `MiuLogList`) that assigned `Region` without
+  disposing the previous one — they now use `RoundedPath.ApplyRegion`.
+- `MiuThumb` and `MiuScrollArea` cached their colours in field initializers, so they kept
+  the light palette after a Dark switch; both now resolve the theme role on read (`null`
+  means "follow the theme") and repaint on theme changes. `MiuLogList` and `MiuThumb` also
+  had no theme subscription at all and never repainted.
+- `MiuCard.Shadow` tested `Mode == MiuMode.Light`, so `MiuMode.System` + a dark desktop still
+  drew the light-theme shadow; it now resolves through `IsDark`.
+- `MiuTheme.IsDark` hit the registry on every read, and `Colors` reads it on every colour
+  lookup (i.e. every paint). The answer is now cached for 1 s and invalidated on `Mode`
+  changes — still follows the user flipping the Windows setting.
+- `MiuField`'s default height was the only hard-coded pixel metric left (`Height = 34`);
+  it is dp now, so fields match the rest of the layout at high DPI.
+
 ## 0.4.0
 
 First public release.

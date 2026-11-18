@@ -43,12 +43,13 @@ public class MiuNumberBox : MiuField
         _box.TextChanged += (_, __) => OnTextEdited();
         Controls.Add(_box);
 
-        MiuTheme.Changed += (_, __) =>
+        MiuThemeHook.Attach(this, () =>
         {
             _box.Font = MiuTheme.Font;
             _box.ForeColor = MiuTheme.Text;
             _box.BackColor = MiuTheme.Colors.SecondaryContainer;
-        };
+            Invalidate();
+        });
     }
 
     public decimal Value

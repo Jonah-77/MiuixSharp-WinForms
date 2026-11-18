@@ -26,6 +26,9 @@ public class MiuLogList : Control
         BackColor = Color.Transparent;
         Font = MiuTheme.Font;
         UpdateRegion();
+        // Every painted colour comes from the live theme; without this the list keeps the
+        // old palette after a Light/Dark switch.
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     /// <summary>Corner radius in pixels.</summary>
@@ -80,8 +83,7 @@ public class MiuLogList : Control
     private void UpdateRegion()
     {
         if (Width < 2 || Height < 2) return;
-        using var path = RoundedPath.Rect(new Rectangle(0, 0, Width, Height), MiuTheme.Dp(_radius));
-        Region = new Region(path);
+        RoundedPath.ApplyRegion(this, MiuTheme.Dp(_radius));
     }
 
     protected override void OnMouseWheel(MouseEventArgs e)

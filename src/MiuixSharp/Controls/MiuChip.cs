@@ -23,7 +23,7 @@ public class MiuChip : Control
         Font = MiuTheme.FontSmall;
         ForeColor = MiuTheme.Text;
         Height = 26;
-        MiuTheme.Changed += (_, __) => Invalidate();
+        MiuThemeHook.Attach(this, () => Invalidate());
     }
 
     public MiuChipTone Tone { get => _tone; set { _tone = value; Invalidate(); } }
@@ -61,7 +61,7 @@ public class MiuChip : Control
 
         using (var p = RoundedPath.Rect(rect, rect.Height / 2))
         using (var b = new SolidBrush(back)) g.FillPath(b, p);
-        var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
+        using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap };
         using var tb = new SolidBrush(fore);
         g.DrawString(Text, Font, tb, rect, sf);
     }

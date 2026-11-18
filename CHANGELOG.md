@@ -156,8 +156,6 @@ First public release.
 **Docs**
 
 - README: new "DPI and scaling" section with the reasoning behind the range.
-- Handover doc: new sections 4.4 (DPI and scaling), 8.13 (white blocks in dark mode),
-  8.14 (containers that did not follow a scaled control).
 - Both screenshots reshot at the 1:1 (96 dpi) baseline.
 
 **Packaging**

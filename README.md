@@ -222,9 +222,6 @@ source tree: which components and theme roles are reproduced, which are approxim
 are intentionally omitted because they are platform-specific (Glass blur, Compose navigation,
 Preference screens).
 
-For the internal design rationale, the WinForms gotchas that shaped the code, and a hand-over
-checklist, read **[项目说明与交接文档.md](项目说明与交接文档.md)** (Chinese).
-
 ## Project structure
 
 ```
@@ -246,7 +243,6 @@ samples/MiuixSharp.Demo/       Interactive capability demo: keyboard + focus rin
 docs/REPRODUCTION.md           Fidelity audit
 docs/index.html                Feature page published to GitHub Pages
 docs/*.png                     Light & dark screenshots
-项目说明与交接文档.md            Chinese hand-over doc: design decisions, pitfalls, checklist
 ```
 
 ## License

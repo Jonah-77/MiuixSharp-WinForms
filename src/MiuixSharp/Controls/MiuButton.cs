@@ -25,6 +25,9 @@ public class MiuButton : Control
         Cursor = Cursors.Hand;
         Font = MiuTheme.Font;
         ForeColor = MiuTheme.Text;
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
+        AccessibleRole = AccessibleRole.PushButton;
         MiuThemeHook.Attach(this, () => { UpdateColors(); ApplyMetrics(); Invalidate(); });
         ApplyMetrics();
         UpdateColors();
@@ -92,8 +95,44 @@ public class MiuButton : Control
     protected override void OnMouseUp(MouseEventArgs e) { _pressed = false; Invalidate(); base.OnMouseUp(e); }
     protected override bool IsInputKey(Keys keyData) => keyData == Keys.Space || keyData == Keys.Enter || base.IsInputKey(keyData);
 
+    /// <summary>Raises Click as a real click would (keyboard / automation / default action).</summary>
+    public void PerformClick() => OnClick(EventArgs.Empty);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            _pressed = true;
+            Invalidate();
+            PerformClick();
+            _pressed = false;
+            Invalidate();
+            return;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { _pressed = false; Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuButtonAccessibleObject(this);
+
+    private sealed class MiuButtonAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuButton _owner;
+        public MiuButtonAccessibleObject(MiuButton owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.PushButton;
+        public override string DefaultAction => "按下";
+        public override void DoDefaultAction() => _owner.PerformClick();
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
+        // base.OnPaint only raises the Paint event (Control has no native frame to draw),
+        // so keeping it lets callers paint on top. MiuWinButton is different: it derives from
+        // Button, whose base.OnPaint draws the square system frame, so that one skips it.
         base.OnPaint(e);
         var g = e.Graphics;
         g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -101,18 +140,27 @@ public class MiuButton : Control
 
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
         Color back = _pressed ? _pressBack : (_hover ? _hoverBack : _baseBack);
+        // Fill the full rounded shape, then stroke one pixel inside it: a centred stroke would
+        // sit half outside the control and get clipped (dashed borders at high DPI).
         using (var path = RoundedPath.Rect(rect, MiuTheme.Dp(_radius)))
         {
             if (back != Color.Transparent)
                 using (var br = new SolidBrush(back)) g.FillPath(br, path);
-            if (_border != Color.Transparent)
-                using (var pen = new Pen(_border, MiuTheme.Dpf(1))) g.DrawPath(pen, path);
         }
+        var edge = new Rectangle(1, 1, Math.Max(0, rect.Width - 2), Math.Max(0, rect.Height - 2));
+        if (_border != Color.Transparent && edge.Width > 2 && edge.Height > 2)
+            using (var path = RoundedPath.Rect(edge, Math.Max(3, MiuTheme.Dp(_radius) - 1)))
+            using (var pen = new Pen(_border, MiuTheme.Dpf(1)))
+                g.DrawPath(pen, path);
 
         using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
         var textRect = Rectangle.Inflate(rect, -Padding.Left / 2, -2);
         using var tb = new SolidBrush(Enabled ? _baseFore : MiuTheme.TextSecondary);
         g.DrawString(Text, Font, tb, textRect, sf);
+
+        // Tab users need to see where they are.
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(rect, -MiuTheme.Dp(4), -MiuTheme.Dp(4)));
     }
 
     protected override void OnEnabledChanged(EventArgs e) { base.OnEnabledChanged(e); Invalidate(); }

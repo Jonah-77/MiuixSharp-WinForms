@@ -200,7 +200,7 @@ footer .rule{margin:0 0 28px}
   <div class="wrap bar-in">
     <div class="mark"><span class="dot">M</span>MiuixSharp</div>
     <div class="meta">
-      <span>0.4.1 · MIT</span>
+      <span>0.4.2 · MIT</span>
       <button class="toggle" id="themeBtn" aria-pressed="false">
         <i></i><span id="themeLabel">深色</span>
       </button>
@@ -356,6 +356,21 @@ footer .rule{margin:0 0 28px}
   <div class="wrap"><div class="rule"></div></div>
 </section>
 
+<!-- ===== 平台能力 ===== -->
+<section>
+  <div class="wrap">
+    <h2>跑在 Windows 上，不是跑在截图里</h2>
+    <p class="sub">换台机器、开高对比、只用键盘、把控件拖进设计器 —— 这些场景都有对应处理，而不是只有一张好看的截图。</p>
+    <div class="limits">
+      <div class="limit"><h4>键盘与读屏可用</h4><p>按钮、勾选、单选、开关、滑块都能 Tab 聚焦，空格或方向键直接操作，自绘控件上也会画焦点框；各自挂了 AccessibleRole，滑块还向读屏报当前值。</p></div>
+      <div class="limit"><h4>跟随系统高对比</h4><p><span class="mono">RespectSystemHighContrast</span> 默认开启：检测到高对比主题就把整套角色映射到 SystemColors，切换即时生效，不用重启程序。</p></div>
+      <div class="limit"><h4>设计器里认得出</h4><p>22 个控件各带 16×16 工具箱图标、Description 和默认事件（按钮 Click、勾选 CheckedChanged、滑块 ValueChanged），拖进工具箱不是一排空白方块。</p></div>
+      <div class="limit"><h4>系统集成</h4><p><span class="mono">AccentSource = System</span> 按 Windows 强调色重新派生色阶；<span class="mono">MiuBackdrop</span> 给窗口加深色标题栏与圆角；DPI 变化时度量就地重算，不用重建控件。</p></div>
+    </div>
+  </div>
+  <div class="wrap"><div class="rule"></div></div>
+</section>
+
 <!-- ===== 边界 ===== -->
 <section>
   <div class="wrap">
@@ -375,7 +390,7 @@ footer .rule{margin:0 0 28px}
 <section>
   <div class="wrap">
     <h2>接入只要一个引用</h2>
-    <p class="sub">零第三方依赖，不用图标字体，全部 GDI+ 手绘。目标是 .NET 8 + WinForms。</p>
+    <p class="sub">零第三方依赖，不用图标字体，全部 GDI+ 手绘。目标是 .NET 8 / 6 + WinForms，同一份源码双目标编译。</p>
     <div class="code">
       <div class="code-bar"><span></span><span></span><span></span></div>
 <pre><span class="c"># 编译 DLL</span>

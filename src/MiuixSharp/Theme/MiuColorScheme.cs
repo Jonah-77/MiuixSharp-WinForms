@@ -87,6 +87,40 @@ public sealed class MiuColorScheme
         SliderKeyPoint = C(0x7A8AA6, 0x4D), SliderKeyPointForeground = C(0x5DAAFF), SliderBackground = C(0xFFFFFF, 0x26),
     };
 
+    /// <summary>
+    /// High-contrast scheme: when Windows high-contrast is active every role falls back to a
+    /// system colour. Self-painted controls that keep their own palette become unreadable in
+    /// that mode, so the whole scheme is remapped instead (Windows accessibility guidance).
+    /// </summary>
+    public static MiuColorScheme HighContrast() => new()
+    {
+        Primary = SystemColors.Highlight, OnPrimary = SystemColors.HighlightText,
+        PrimaryVariant = SystemColors.Highlight, OnPrimaryVariant = SystemColors.HighlightText,
+        PrimaryContainer = SystemColors.Highlight, OnPrimaryContainer = SystemColors.HighlightText,
+        TertiaryContainer = SystemColors.Window, OnTertiaryContainer = SystemColors.Highlight,
+        TertiaryContainerVariant = SystemColors.Window, OnTertiaryContainerVariant = SystemColors.Highlight,
+        Error = SystemColors.HotTrack, OnError = SystemColors.Window,
+        ErrorContainer = SystemColors.Window, OnErrorContainer = SystemColors.WindowText,
+        Secondary = SystemColors.Control, OnSecondary = SystemColors.WindowText,
+        SecondaryVariant = SystemColors.Control, OnSecondaryVariant = SystemColors.WindowText,
+        SecondaryContainer = SystemColors.Control, OnSecondaryContainer = SystemColors.WindowText,
+        SecondaryContainerVariant = SystemColors.Control, OnSecondaryContainerVariant = SystemColors.WindowText,
+        DisabledPrimary = SystemColors.Control, DisabledOnPrimary = SystemColors.GrayText,
+        DisabledPrimaryButton = SystemColors.Control, DisabledOnPrimaryButton = SystemColors.GrayText,
+        DisabledSecondary = SystemColors.Control, DisabledOnSecondary = SystemColors.GrayText,
+        DisabledOnSurface = SystemColors.GrayText,
+        Background = SystemColors.Window, OnBackground = SystemColors.WindowText, OnBackgroundVariant = SystemColors.WindowText,
+        Surface = SystemColors.Window, OnSurface = SystemColors.WindowText, OnSurfaceSecondary = SystemColors.WindowText,
+        OnSurfaceVariantSummary = SystemColors.WindowText, OnSurfaceVariantActions = SystemColors.GrayText,
+        SurfaceVariant = SystemColors.Window, SurfaceContainer = SystemColors.Window,
+        OnSurfaceContainer = SystemColors.WindowText, OnSurfaceContainerVariant = SystemColors.WindowText,
+        SurfaceContainerHigh = SystemColors.Control, OnSurfaceContainerHigh = SystemColors.WindowText,
+        SurfaceContainerHighest = SystemColors.Control, OnSurfaceContainerHighest = SystemColors.WindowText,
+        Outline = SystemColors.WindowText, DividerLine = SystemColors.WindowText, WindowDimming = Color.Black,
+        SliderKeyPoint = SystemColors.GrayText, SliderKeyPointForeground = SystemColors.Highlight,
+        SliderBackground = SystemColors.Control,
+    };
+
     private static Color C(int rgb, int alpha = 0xFF) =>
         Color.FromArgb(alpha, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 }

@@ -13,6 +13,8 @@ internal static class Program
     {
         ApplicationConfiguration.Initialize();
         if (args.Length > 0 && args[0] == "--dark") MiuTheme.Mode = MiuMode.Dark;
+        // --accent follows the Windows accent colour instead of the Miuix seed blue.
+        if (Array.Exists(args, a => a == "--accent")) MiuTheme.AccentSource = MiuAccentSource.System;
         for (int i = 0; i + 1 < args.Length; i++)
             if (args[i] == "--scale") MiuTheme.SetScale(float.Parse(args[i + 1]));
         Application.Run(new ShowcaseForm());
@@ -54,6 +56,8 @@ internal class ShowcaseForm : Form
         MiuTheme.Changed += (_, __) => { BackColor = MiuTheme.Background; MiuTitleBar.Apply(this); Invalidate(true); };
         // The OS caption bar is DWM-drawn, so it must be recoloured after the handle exists.
         HandleCreated += (_, __) => MiuTitleBar.Apply(this);
+        // Dark caption + rounded corners, kept in sync with the theme for the window's lifetime.
+        MiuBackdrop.Attach(this);
         Build();
     }
 

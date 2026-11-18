@@ -52,6 +52,19 @@ project with minimal changes.
   `MiuTitleBar` (recolours the OS title bar through DWM so it is not the default accent blue).
 - **Drop-in compatibility** — `MiuWinButton` derives from `System.Windows.Forms.Button`, so it
   slots into legacy code (`Dock`, `FlatAppearance`, `DialogResult`) unchanged.
+- **Keyboard and screen-reader ready** — buttons, checkboxes, radio buttons, switches and sliders
+  are focusable (`Tab`), activate on `Space` / arrow keys, paint a focus rectangle, and expose
+  `AccessibleRole` + `AccessibleObject` (sliders report their numeric value).
+- **High contrast** — `MiuTheme.RespectSystemHighContrast` (on by default) maps the whole role
+  set onto `SystemColors` when Windows is in a high-contrast theme, and reacts live.
+- **Designer support** — every droppable control ships a 16×16 toolbox bitmap plus
+  `Description` and a `DefaultEvent` (buttons `Click`, check states `CheckedChanged`,
+  slider `ValueChanged`).
+- **System integration** — `MiuTheme.AccentSource = MiuAccentSource.System` derives the palette
+  from the Windows accent colour; `MiuBackdrop` gives a form a themed caption bar and rounded
+  corners through DWM.
+- **Two frameworks, one source** — compiles for `net8.0-windows` and `net6.0-windows`;
+  CI publishes a symbol package with SourceLink.
 
 ## Install
 
@@ -69,7 +82,8 @@ Add a project reference in your WinForms app:
 </ItemGroup>
 ```
 
-Requires **.NET 8 with Windows Forms** (`net8.0-windows`, `<UseWindowsForms>true</UseWindowsForms>`).
+Requires **Windows Forms** on **.NET 8 or .NET 6** (`net8.0-windows` / `net6.0-windows`,
+`<UseWindowsForms>true</UseWindowsForms>`).
 
 ## DPI and scaling
 
@@ -86,7 +100,7 @@ bitmap stretching.
 | Hairlines | floor of 0.75 px (`MiuTheme.Dpf()`), so a 0.75 dp divider stays visible at 100% |
 | Window | size it in dp too (`MiuTheme.Dp(1020)`), otherwise high-DPI content overflows a fixed window |
 | Live changes | `MiuDpi.Watch(form)` hooks `DpiChanged`; controls repaint and WinForms re-lays the form |
-| Metrics at runtime | sizes fixed in a constructor (`MiuSwitch`, `MiuSlider` height, `MiuProgressIndicator`) use the scale in force **when they are created**; set the scale before building the UI, or rebuild controls after changing it |
+| Metrics at runtime | every control recomputes its own metrics (`ApplyMetrics()`) when the scale or theme changes, so a `DpiChanged` — or an in-app zoom change — resizes the control instead of leaving it at its constructor size. A size you set yourself is never overwritten |
 
 ```csharp
 public MainForm()
@@ -116,6 +130,30 @@ Reference points: Windows display scaling is defined as 100%–500% (Microsoft S
 with linear `AutoScaleMode.Dpi` — which is exactly the doubling this library avoids by
 scaling from dp itself.
 
+## Accessibility and system integration
+
+Three OS-level behaviours that WinForms does not give you for a hand-drawn control:
+
+| Concern | What the library does |
+|---|---|
+| Keyboard | buttons / checkboxes / radio / switch / slider are `Selectable` + `TabStop`; `Space` activates the toggle family, arrows and `Home`/`End`/`PageUp`/`PageDown` move the slider (`SmallChange` / `LargeChange`); a focus rectangle is drawn inside the rounded shape |
+| Screen readers | each control overrides `CreateAccessibilityInstance()`; roles are `PushButton`, `CheckButton`, `RadioButton`, `Slider`, `ProgressBar`; `DefaultAction` performs the same action as a click, and the slider's `Value` reports its number |
+| High contrast | `MiuTheme.RespectSystemHighContrast = true` (default) switches every role to `SystemColors` (`Highlight`, `WindowText`, `Window` …) while Windows is in a high-contrast theme; `SystemEvents.UserPreferenceChanged` re-applies it without a restart |
+| Accent colour | `MiuTheme.AccentSource = MiuAccentSource.System` reads `HKCU\...\DWM\AccentColor` and re-derives the palette from it |
+| Window frame | `MiuBackdrop.Attach(form)` sets the dark/light caption bar and rounded corners (`DwmSetWindowAttribute`), and can request a Mica/Acrylic system backdrop where the OS supports it |
+
+```csharp
+MiuTheme.AccentSource = MiuAccentSource.System;   // follow the Windows accent colour
+MiuBackdrop.Attach(this);                         // themed caption bar + rounded corners
+```
+
+Product colours can be overridden without forking the library:
+
+```csharp
+MiuTheme.SetWarning(Color.FromArgb(0xD9, 0x8A, 0x00), Color.FromArgb(0xFF, 0xF1, 0xD6));
+MiuTheme.SetSuccess(Color.FromArgb(0x2E, 0x8B, 0x57));
+// MiuTheme.ClearWarning() / ClearSuccess() go back to the scheme defaults
+```
 
 ## Quick start
 

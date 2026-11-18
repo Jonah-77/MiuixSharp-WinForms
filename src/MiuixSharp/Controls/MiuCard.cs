@@ -15,7 +15,7 @@ public class MiuCard : UserControl
     private int _radius = MiuTheme.RadiusLg; // 16dp — CardDefaults.CornerRadius
     private int _shadow = 0;                 // Miuix cards use surface layering, not drop shadow
     private bool _accent;
-    private const int Pad = 10; // room for the shadow around content
+    private int _pad = -1; // room for the shadow around content, in device px (10dp)
 
     public MiuCard()
     {
@@ -23,8 +23,17 @@ public class MiuCard : UserControl
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
                  ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-        MiuThemeHook.Attach(this, () => Invalidate());
-        Padding = new Padding(Pad);
+        ApplyMetrics();
+        MiuThemeHook.Attach(this, () => { ApplyMetrics(); Invalidate(); });
+    }
+
+    /// <summary>Re-derives dp metrics in device pixels (DPI change / app-level zoom).</summary>
+    private void ApplyMetrics()
+    {
+        int pad = MiuTheme.Dp(10);
+        // A caller-provided padding wins; only the auto padding follows the scale.
+        if (_pad < 0 || Padding.All == _pad) Padding = new Padding(pad);
+        _pad = pad;
     }
 
     /// <summary>Corner radius in pixels.</summary>
@@ -37,7 +46,7 @@ public class MiuCard : UserControl
     public bool Accent { get => _accent; set { _accent = value; Invalidate(); } }
 
     /// <summary>The inner rectangle where child controls should live.</summary>
-    public Rectangle ContentBounds => new(Pad, Pad, Width - Pad * 2, Height - Pad * 2);
+    public Rectangle ContentBounds => new(_pad, _pad, Width - _pad * 2, Height - _pad * 2);
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -45,7 +54,7 @@ public class MiuCard : UserControl
         var g = e.Graphics;
         g.SmoothingMode = SmoothingMode.AntiAlias;
 
-        var cardRect = new Rectangle(Pad, Pad, Width - Pad * 2 - 1, Height - Pad * 2 - 1);
+        var cardRect = new Rectangle(_pad, _pad, Width - _pad * 2 - 1, Height - _pad * 2 - 1);
         if (cardRect.Width <= 0 || cardRect.Height <= 0) return;
 
         // Soft shadow: a few offset translucent rounded fills beneath the card.

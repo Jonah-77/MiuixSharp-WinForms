@@ -12,6 +12,8 @@ namespace MiuixSharp.Controls;
 ///
 /// Usage: add column names to <see cref="ActionColumns"/>.
 /// </summary>
+[System.Drawing.ToolboxBitmap(typeof(MiuActionGrid), "MiuixSharp.Icons.MiuActionGrid.bmp")]
+[System.ComponentModel.Description("带行内操作列的表格")]
 public class MiuActionGrid : DataGridView
 {
     private readonly HashSet<string> _actionColumns = new(StringComparer.OrdinalIgnoreCase);

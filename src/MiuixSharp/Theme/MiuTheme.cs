@@ -5,6 +5,9 @@ namespace MiuixSharp.Theme;
 /// <summary>Whether to use the light, dark, or system-following scheme.</summary>
 public enum MiuMode { Light, Dark, System }
 
+/// <summary>Where the seed (and therefore the primary palette) comes from.</summary>
+public enum MiuAccentSource { Seed, System }
+
 /// <summary>Palette styles for seed-derived ("Monet") colors — ported from Miuix.</summary>
 public enum MiuPaletteStyle { TonalSpot, Neutral, Vibrant, Expressive, Monochrome }
 
@@ -27,13 +30,56 @@ public static class MiuTheme
     private static readonly Font _fontSm = new("Microsoft YaHei", 8.25F);
     private static readonly Font _fontLg = new("Microsoft YaHei", 12F, FontStyle.Bold);
 
+    private static MiuColorScheme _highContrast = MiuColorScheme.HighContrast();
+    private static MiuAccentSource _accentSource = MiuAccentSource.Seed;
+
+    static MiuTheme()
+    {
+        // High contrast, accent colour and display settings can all change while the app runs.
+        // WinForms exposes them through SystemEvents; a repaint is enough for every control.
+        try
+        {
+            Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, __) => OnSystemChanged();
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (_, __) => OnSystemChanged();
+        }
+        catch { /* no message pump (console/test host): settings are read on demand instead */ }
+    }
+
+    private static void OnSystemChanged()
+    {
+        _darkCacheAt = long.MinValue;
+        _highContrast = MiuColorScheme.HighContrast();
+        if (_accentSource == MiuAccentSource.System) { _seed = ReadSystemAccent(); _monet = true; RebuildMonet(); return; }
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>Follow Windows high-contrast when the user turns it on (default).</summary>
+    public static bool RespectSystemHighContrast { get; set; } = true;
+
+    /// <summary>True when system colours are in force instead of the Miuix palette.</summary>
+    public static bool IsHighContrast
+    {
+        get
+        {
+            if (!RespectSystemHighContrast) return false;
+            try { return System.Windows.Forms.SystemInformation.HighContrast; } catch { return false; }
+        }
+    }
+
     /// <summary>Raised whenever the theme changes so controls can repaint.</summary>
     public static event EventHandler Changed;
 
     public static MiuMode Mode
     {
         get => _mode;
-        set { _mode = value; _darkCacheAt = long.MinValue; Changed?.Invoke(null, EventArgs.Empty); }
+        set
+        {
+            _mode = value;
+            _darkCacheAt = long.MinValue;
+            MiuResources.Clear();
+            Changed?.Invoke(null, EventArgs.Empty);
+        }
     }
 
     // Resolving System mode reads the registry, and Colors is consulted from every paint
@@ -71,8 +117,40 @@ public static class MiuTheme
         catch { return false; }
     }
 
-    /// <summary>Active color scheme (respects current resolved mode).</summary>
-    public static MiuColorScheme Colors => IsDark ? _dark : _light;
+    /// <summary>Active color scheme (high contrast wins, then the resolved light/dark mode).</summary>
+    public static MiuColorScheme Colors => IsHighContrast ? _highContrast : IsDark ? _dark : _light;
+
+    /// <summary>
+    /// Where the palette seed comes from. <see cref="MiuAccentSource.System"/> follows the
+    /// Windows personalisation accent colour and re-derives the palette in the HSV space
+    /// (same idea as WPF UI's accent variants). Changing the Windows accent re-applies it.
+    /// </summary>
+    public static MiuAccentSource AccentSource
+    {
+        get => _accentSource;
+        set
+        {
+            _accentSource = value;
+            if (value == MiuAccentSource.System) Seed = ReadSystemAccent();
+        }
+    }
+
+    /// <summary>Current Windows accent colour (falls back to the Miuix blue).</summary>
+    public static Color ReadSystemAccent()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
+            if (key?.GetValue("AccentColor") is int v)
+            {
+                // DWM stores accent as 0xAABBGGRR.
+                var a = (v >> 24) & 0xFF;
+                return Color.FromArgb(a == 0 ? 255 : a, v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF);
+            }
+        }
+        catch { }
+        return Color.FromArgb(0x34, 0x82, 0xFF);
+    }
 
     public static MiuPaletteStyle PaletteStyle
     {
@@ -108,6 +186,7 @@ public static class MiuTheme
         d.PrimaryContainer = _palette.Tone(30); d.OnPrimaryContainer = _palette.Tone(90);
         d.TertiaryContainer = _palette.Tone(25); d.OnTertiaryContainer = _palette.Tone(80);
         _light = l; _dark = d;
+        MiuResources.Clear();
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
@@ -125,10 +204,53 @@ public static class MiuTheme
     public static Color TextSecondary => Colors.OnSurfaceVariantSummary;
     public static Color Outline => Colors.Outline;
 
-    /// <summary>Miuix error color (rendered as the restrained "warning" accent).</summary>
-    public static Color Warning => Colors.Error;
-    public static Color WarningContainer => Colors.ErrorContainer;
-    public static Color Success => Color.FromArgb(0x1E, 0x7A, 0x4B);
+    /// <summary>Warning accent. Defaults to the Miuix error colour, overridable per app.</summary>
+    public static Color Warning => _warning ?? Colors.Error;
+
+    /// <summary>Container behind <see cref="Warning"/> text. Overridable per app.</summary>
+    public static Color WarningContainer => _warningContainer ?? Colors.ErrorContainer;
+
+    private static Color? _warning, _warningContainer, _success;
+
+    /// <summary>
+    /// Product-level override for the warning accent (e.g. a restrained amber instead of
+    /// the default red). The caller is responsible for light/dark contrast; the values stay
+    /// fixed across theme switches until <see cref="ClearWarning"/> is called.
+    /// </summary>
+    public static void SetWarning(Color fore, Color container)
+    {
+        _warning = fore;
+        _warningContainer = container;
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>Drop the warning override and fall back to the scheme's error colour.</summary>
+    public static void ClearWarning()
+    {
+        _warning = _warningContainer = null;
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>Success accent — light green on dark, deeper green on light by default.</summary>
+    public static Color Success => _success ?? (IsDark ? Color.FromArgb(0x6D, 0xD4, 0x9B) : Color.FromArgb(0x1E, 0x7A, 0x4B));
+
+    /// <summary>Product-level override for the success accent.</summary>
+    public static void SetSuccess(Color color)
+    {
+        _success = color;
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>Drop the success override and go back to the theme-derived green.</summary>
+    public static void ClearSuccess()
+    {
+        _success = null;
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
 
     // ---- Type ----
     public static Font Font => _font;
@@ -174,6 +296,8 @@ public static class MiuTheme
         var s = ClampScale(scale);
         if (Math.Abs(s - _scale) < 0.0001f) return;
         _scale = s;
+        MiuResources.Clear();
+        MiuPathCache.Clear();
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
@@ -194,5 +318,10 @@ public static class MiuTheme
     public static int ButtonMinHeight => 40; // ButtonDefaults.MinHeight = 40dp
     public static int Space => 12;
 
-    public static void Refresh() => Changed?.Invoke(null, EventArgs.Empty);
+    public static void Refresh()
+    {
+        MiuResources.Clear();
+        MiuPathCache.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
 }

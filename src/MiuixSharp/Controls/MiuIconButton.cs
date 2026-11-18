@@ -27,7 +27,43 @@ public class MiuIconButton : Control
         Size = new Size(MiuTheme.Dp(40), MiuTheme.Dp(40)); // IconButtonDefaults Size = 40dp
         Cursor = Cursors.Hand;
         Font = new Font("Segoe UI Symbol", 14F);
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
+        AccessibleRole = AccessibleRole.PushButton;
         MiuThemeHook.Attach(this, () => Invalidate());
+    }
+
+    /// <summary>Raises Click as a real click would (keyboard / automation / default action).</summary>
+    public void PerformClick() => OnClick(EventArgs.Empty);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            _pressed = true;
+            Invalidate();
+            PerformClick();
+            _pressed = false;
+            Invalidate();
+            return;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { _pressed = false; Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuIconButtonAccessibleObject(this);
+
+    private sealed class MiuIconButtonAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuIconButton _owner;
+        public MiuIconButtonAccessibleObject(MiuIconButton owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.PushButton;
+        public override string DefaultAction => "按下";
+        public override void DoDefaultAction() => _owner.PerformClick();
     }
 
     public MiuButtonStyle Style { get => _style; set { _style = value; Invalidate(); } }
@@ -57,5 +93,8 @@ public class MiuIconButton : Control
         using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         using var tb = new SolidBrush(fore);
         g.DrawString(Text, Font, tb, rect, sf);
+
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(rect, -MiuTheme.Dp(6), -MiuTheme.Dp(6)));
     }
 }

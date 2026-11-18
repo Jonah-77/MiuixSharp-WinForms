@@ -18,9 +18,59 @@ public class MiuSwitch : Control
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw |
                  ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-        Width = MiuTheme.Dp(46); Height = MiuTheme.Dp(26);
+        AccessibleRole = AccessibleRole.CheckButton;
+        ApplyMetrics();
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
         Cursor = Cursors.Hand;
-        MiuThemeHook.Attach(this, () => Invalidate());
+        MiuThemeHook.Attach(this, () => { ApplyMetrics(); Invalidate(); });
+    }
+
+    private int _autoW = -1, _autoH = -1;
+
+    /// <summary>Re-derives dp metrics in device pixels (DPI change / app-level zoom).</summary>
+    private void ApplyMetrics()
+    {
+        int w = MiuTheme.Dp(46), h = MiuTheme.Dp(26);
+        if (_autoW < 0 || (Width == _autoW && Height == _autoH)) Size = new Size(w, h);
+        _autoW = w; _autoH = h;
+    }
+
+    /// <summary>Flips the switch exactly as a click would (keyboard / automation).</summary>
+    public void PerformToggle()
+    {
+        Checked = !Checked;
+        OnClick(EventArgs.Empty);
+    }
+
+    protected override bool IsInputKey(Keys keyData) => keyData == Keys.Space || base.IsInputKey(keyData);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            PerformToggle();
+            return;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuSwitchAccessibleObject(this);
+
+    private sealed class MiuSwitchAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuSwitch _owner;
+        public MiuSwitchAccessibleObject(MiuSwitch owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.CheckButton;
+        public override string DefaultAction => "切换";
+        public override void DoDefaultAction() => _owner.PerformToggle();
+        public override AccessibleStates State =>
+            base.State | (_owner.Checked ? AccessibleStates.Checked : AccessibleStates.None);
     }
 
     public bool Checked
@@ -53,12 +103,14 @@ public class MiuSwitch : Control
         var track = new Rectangle(0, 0, Width - 1, h - 1);
         Color trackColor = _on ? MiuTheme.Primary : RoundedPath.Blend(MiuTheme.SurfaceAlt, MiuTheme.TextSecondary, 0.25);
         using (var p = RoundedPath.Rect(track, h / 2))
-        using (var b = new SolidBrush(trackColor)) g.FillPath(b, p);
+            g.FillPath(MiuResources.Brush(trackColor), p);
 
         int thumbD = h - 6;
         float x = 3 + _anim * (Width - thumbD - 6);
         var thumb = new RectangleF(x, 3, thumbD, thumbD);
-        using var tb = new SolidBrush(_on ? MiuTheme.OnPrimary : Color.White);
-        g.FillEllipse(tb, thumb);
+        g.FillEllipse(MiuResources.Brush(_on ? MiuTheme.OnPrimary : Color.White), thumb);
+
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(track, MiuTheme.Dp(2), MiuTheme.Dp(2)));
     }
 }

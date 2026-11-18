@@ -23,9 +23,68 @@ public class MiuSlider : Control
         // sliderBackground is a translucent role (#0F000000 / #26FFFFFF): it has to be composited
         // over the parent surface, not over an opaque control background.
         BackColor = Color.Transparent;
-        Height = MiuTheme.Dp(28); // SliderDefaults.MinHeight = 28dp
         Cursor = Cursors.Hand;
-        MiuThemeHook.Attach(this, () => Invalidate());
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
+        AccessibleRole = AccessibleRole.Slider;
+        ApplyMetrics();
+        MiuThemeHook.Attach(this, () => { ApplyMetrics(); Invalidate(); });
+    }
+
+    private int _autoHeight = -1;
+
+    /// <summary>Re-derives dp metrics in device pixels (DPI change / app-level zoom).</summary>
+    private void ApplyMetrics()
+    {
+        int h = MiuTheme.Dp(28); // SliderDefaults.MinHeight = 28dp
+        if (_autoHeight < 0 || Height == _autoHeight) Height = h;
+        _autoHeight = h;
+    }
+
+    /// <summary>Step for the Left/Right (Up/Down) keys.</summary>
+    public int SmallChange { get; set; } = 1;
+
+    /// <summary>Step for PageUp / PageDown.</summary>
+    public int LargeChange { get; set; } = 10;
+
+    protected override bool IsInputKey(Keys keyData) => keyData is Keys.Left or Keys.Right or Keys.Up or Keys.Down
+        or Keys.PageUp or Keys.PageDown or Keys.Home or Keys.End || base.IsInputKey(keyData);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        int next = _value;
+        switch (e.KeyCode)
+        {
+            case Keys.Left: case Keys.Down: next = _value - SmallChange; break;
+            case Keys.Right: case Keys.Up: next = _value + SmallChange; break;
+            case Keys.PageDown: next = _value - LargeChange; break;
+            case Keys.PageUp: next = _value + LargeChange; break;
+            case Keys.Home: next = Lo; break;
+            case Keys.End: next = Hi; break;
+            default: base.OnKeyDown(e); return;
+        }
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+        Value = next;
+        ValueChangedFinished?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuSliderAccessibleObject(this);
+
+    private sealed class MiuSliderAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuSlider _owner;
+        public MiuSliderAccessibleObject(MiuSlider owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.Slider;
+        // Windows exposes the numeric value through the Value property (accValue).
+        public override string Value
+        {
+            get => _owner.Value.ToString();
+            set { if (int.TryParse(value, out var v)) _owner.Value = v; }
+        }
     }
 
     // Minimum/Maximum can be set in any order (Minimum = 50 then Maximum = 40, or a caller
@@ -58,7 +117,7 @@ public class MiuSlider : Control
     private int ValueFromX(int x)
     {
         int w = Width - 20;
-        if (w <= 0) return _min;
+        if (w <= 0) return Lo;
         double ratio = Math.Clamp((x - 10) / (double)w, 0, 1);
         int raw = Lo + (int)Math.Round(ratio * (Hi - Lo));
         // Magnetic snap to key points (Miuix magnetThreshold).
@@ -92,11 +151,9 @@ public class MiuSlider : Control
         int thumbX = x0 + (int)Math.Round(ratio * w);
 
         // inactive track
-        using (var pen = new Pen(MiuTheme.Colors.SliderBackground, MiuTheme.Dpf(8)))
-        { pen.StartCap = LineCap.Round; pen.EndCap = LineCap.Round; g.DrawLine(pen, x0, cy, x1, cy); }
+        g.DrawLine(MiuResources.RoundPen(MiuTheme.Colors.SliderBackground, MiuTheme.Dpf(8)), x0, cy, x1, cy);
         // active track
-        using (var pen = new Pen(MiuTheme.Primary, MiuTheme.Dpf(8)))
-        { pen.StartCap = LineCap.Round; pen.EndCap = LineCap.Round; g.DrawLine(pen, x0, cy, thumbX, cy); }
+        g.DrawLine(MiuResources.RoundPen(MiuTheme.Primary, MiuTheme.Dpf(8)), x0, cy, thumbX, cy);
 
         // key points — KeyPointRadius = 3.855dp (official)
         if (ShowKeyPoints)
@@ -106,14 +163,16 @@ public class MiuSlider : Control
             {
                 double r = (Hi - Lo) == 0 ? 0 : (kp - Lo) / (double)(Hi - Lo);
                 int kx = x0 + (int)Math.Round(r * w);
-                using var b = new SolidBrush(MiuTheme.Colors.SliderKeyPointForeground);
-                g.FillEllipse(b, kx - kpr, cy - kpr, kpr * 2, kpr * 2);
+                g.FillEllipse(MiuResources.Brush(MiuTheme.Colors.SliderKeyPointForeground), kx - kpr, cy - kpr, kpr * 2, kpr * 2);
             }
         }
 
         // thumb
         int tr = MiuTheme.Dp(10);
-        using (var b = new SolidBrush(MiuTheme.Primary)) g.FillEllipse(b, thumbX - tr, cy - tr, tr * 2, tr * 2);
-        using (var pen = new Pen(MiuTheme.OnPrimary, MiuTheme.Dpf(2))) g.DrawEllipse(pen, thumbX - tr, cy - tr, tr * 2, tr * 2);
+        g.FillEllipse(MiuResources.Brush(MiuTheme.Primary), thumbX - tr, cy - tr, tr * 2, tr * 2);
+        g.DrawEllipse(MiuResources.Pen(MiuTheme.OnPrimary, MiuTheme.Dpf(2)), thumbX - tr, cy - tr, tr * 2, tr * 2);
+
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, new Rectangle(x0, 0, Math.Max(1, x1 - x0), Height - 1));
     }
 }

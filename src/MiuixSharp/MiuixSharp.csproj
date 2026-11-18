@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- net8.0 is the modern target; net6.0-windows keeps the library usable from
+         .NET 6 / 7 apps without forcing them to retarget. -->
+    <TargetFrameworks>net8.0-windows;net6.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,10 +12,15 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <AssemblyName>MiuixSharp</AssemblyName>
     <RootNamespace>MiuixSharp</RootNamespace>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Authors>MiuixSharp contributors</Authors>
     <Description>A modern, Miuix-inspired control library for WinForms on .NET. Rounded cards, tonal colors, squircle corners.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- Step-into-library debugging: ship symbols and source-link them to the repo. -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -21,12 +28,21 @@
     <PackageProjectUrl>https://github.com/Jonah-77/MiuixSharp-WinForms</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Jonah-77/MiuixSharp-WinForms</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>winforms;miuix;ui;controls;rounded;squircle;high-dpi</PackageTags>
+    <PackageTags>winforms;miuix;ui;controls;rounded;squircle;high-dpi;accessibility;dark-mode</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Toolbox icons: one 16x16 BMP per control, referenced by [ToolboxBitmap(typeof(X), "...")]. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Icons\*.bmp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

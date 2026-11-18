@@ -57,11 +57,16 @@ public class MiuSurface : Panel
         {
             using var b = new SolidBrush(MiuTheme.Surface);
             g.FillPath(b, path);
-            if (_outline)
-            {
-                using var pen = new Pen(MiuTheme.Outline, 1);
-                g.DrawPath(pen, path);
-            }
+        }
+        // The control clips itself to a rounded Region, so an edge-centred stroke is half
+        // clipped (dashed outline at 150%). Stroke one pixel inside the fill instead.
+        if (_outline)
+        {
+            var edge = new Rectangle(1, 1, Math.Max(0, rect.Width - 2), Math.Max(0, rect.Height - 2));
+            if (edge.Width > 2 && edge.Height > 2)
+                using (var path = RoundedPath.Rect(edge, Math.Max(3, MiuTheme.Dp(_radius) - 1)))
+                using (var pen = new Pen(MiuTheme.Outline, 1))
+                    g.DrawPath(pen, path);
         }
         base.OnPaint(e);
     }

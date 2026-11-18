@@ -1,5 +1,73 @@
 # Changelog
 
+## 0.4.2
+
+Platform pass: the library now behaves like a citizen of Windows, not just a screenshot.
+No breaking API changes; two behaviours became automatic (see Notes).
+
+**Accessibility**
+
+- Buttons (`MiuButton`, `MiuIconButton`), `MiuCheckBox`, `MiuRadioButton`, `MiuSwitch` and
+  `MiuSlider` are focusable and keyboard-operable: `Space` (and `Enter` on the button family)
+  activates them, arrows / `Home` / `End` / `PageUp` / `PageDown` move the slider through its
+  new `SmallChange` / `LargeChange` steps, and a focus rectangle is painted inside the rounded
+  shape. `MiuWinButton` (derived from `Button`) paints its own focus cue too, because it skips
+  the native `OnPaint`.
+- Each of them overrides `CreateAccessibilityInstance()` with the right `AccessibleRole`
+  (`PushButton` / `CheckButton` / `RadioButton` / `Slider` / `ProgressBar`), a `DefaultAction`
+  and, for the check family, `Checked` / `Mixed` states; `MiuSlider`'s accessible object also
+  exposes its numeric `Value`.
+- `MiuProgressIndicator` no longer runs its animation timer at design time or while hidden
+  (`DesignMode` / `Visible` guarded, restarted on `HandleCreated`).
+
+**High contrast**
+
+- `MiuTheme.RespectSystemHighContrast` (default `true`) and `MiuTheme.IsHighContrast`; while
+  Windows is in a high-contrast theme, `MiuTheme.Colors` returns a `MiuColorScheme.HighContrast()`
+  mapping of the whole role set onto `SystemColors`. `UserPreferenceChanged` /
+  `DisplaySettingsChanged` re-apply it live.
+
+**Designer**
+
+- 22 controls now carry `[ToolboxBitmap]` (16×16, embedded from `src/MiuixSharp/Icons/`),
+  `[Description]` and a `[DefaultEvent]` (buttons `Click`, check family `CheckedChanged`,
+  slider `ValueChanged`).
+
+**DPI**
+
+- Every control with a constructor-fixed size now has `ApplyMetrics()` (`MiuField`, `MiuCard`,
+  `MiuChip`, `MiuSwitch`, `MiuSlider`, `MiuProgressIndicator`): metrics are recomputed when the
+  scale or theme changes, so `DpiChanged` or `MiuTheme.SetScale()` resizes the control instead
+  of leaving it at its birth size. A size the caller set explicitly is preserved.
+- GDI pooling: `MiuResources.Brush/Pen/RoundPen` and `MiuPathCache` are shared, cleared on theme
+  or scale changes; the slider, switch and progress indicator now paint from the pool instead of
+  allocating per frame.
+
+**System integration**
+
+- `MiuTheme.AccentSource` (`Seed` | `System`) with `MiuTheme.ReadSystemAccent()`.
+- New `MiuBackdrop`: `Apply` / `Attach` set the themed caption bar, rounded window corners and
+  an optional Mica / Acrylic system backdrop through `DwmSetWindowAttribute`.
+- `MiuTheme.SetWarning` / `ClearWarning` and `SetSuccess` / `ClearSuccess`: product colours
+  without forking the library. `Success` is also theme-aware now (lighter green on dark).
+
+**Fixes**
+
+- A 1 px stroke drawn on the same rounded path that a control clips itself to was half clipped,
+  which shows up as a dashed border at 150 % (`MiuWinButton`, `MiuSurface`, `MiuButton`): the
+  fill keeps the full path and the stroke is now inset by one pixel.
+- `MiuScrollArea` re-measures automatically when children are added to or removed from its
+  content (`ControlAdded` / `ControlRemoved`, with a re-entrancy guard around `RefreshLayout`);
+  calling `RefreshLayout()` by hand still works.
+- `MiuChip` had the last hard-coded pixel height (`26`), and its `Success` tone used a fixed
+  light green that stayed bright on a dark surface.
+
+**Notes**
+
+- The package now builds for `net8.0-windows` **and** `net6.0-windows`, ships a `.snupkg` with
+  SourceLink (`Microsoft.SourceLink.GitHub`), and includes the toolbox bitmaps as resources.
+- `MiuScrollArea` and the `ApplyMetrics` behaviour are opt-out-by-override, not opt-in.
+
 ## 0.4.1
 
 Code review pass over the whole library. No API changes; behaviour fixes only.

@@ -28,10 +28,20 @@ public abstract class MiuField : Control
         SetStyle(ControlStyles.Selectable, true);
         BackColor = Color.Transparent;
         Font = MiuTheme.Font;
-        Height = MiuTheme.Dp(34);
+        ApplyMetrics();
         TabStop = true;
         Cursor = Cursors.Hand;
-        MiuThemeHook.Attach(this, () => { Font = MiuTheme.Font; Invalidate(); });
+        MiuThemeHook.Attach(this, () => { Font = MiuTheme.Font; ApplyMetrics(); Invalidate(); });
+    }
+
+    private int _autoHeight = -1;
+
+    /// <summary>Re-derives dp metrics in device pixels (DPI change / app-level zoom).</summary>
+    private void ApplyMetrics()
+    {
+        int h = MiuTheme.Dp(34);
+        if (_autoHeight < 0 || Height == _autoHeight) Height = h;
+        _autoHeight = h;
     }
 
     /// <summary>Corner radius in pixels. Miuix uses 16dp on tall fields; compact desktop rows use 10.</summary>

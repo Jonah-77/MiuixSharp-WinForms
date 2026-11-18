@@ -23,7 +23,55 @@ public class MiuCheckBox : Control
         BackColor = Color.Transparent;
         Size = new Size(MiuTheme.Dp(20), MiuTheme.Dp(20));
         Cursor = Cursors.Hand;
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
+        AccessibleRole = AccessibleRole.CheckButton;
         MiuThemeHook.Attach(this, () => Invalidate());
+    }
+
+    /// <summary>Flips the state exactly as a click would (keyboard / automation).</summary>
+    public void PerformToggle()
+    {
+        State = State == MiuToggleState.On ? MiuToggleState.Off : MiuToggleState.On;
+        OnClick(EventArgs.Empty);
+    }
+
+    protected override bool IsInputKey(Keys keyData) => keyData == Keys.Space || base.IsInputKey(keyData);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            PerformToggle();
+            return;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuCheckAccessibleObject(this);
+
+    private sealed class MiuCheckAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuCheckBox _owner;
+        public MiuCheckAccessibleObject(MiuCheckBox owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.CheckButton;
+        public override string DefaultAction => "切换";
+        public override void DoDefaultAction() => _owner.PerformToggle();
+        public override AccessibleStates State
+        {
+            get
+            {
+                var s = base.State;
+                if (_owner.State == MiuToggleState.On) s |= AccessibleStates.Checked;
+                if (_owner.State == MiuToggleState.Indeterminate) s |= AccessibleStates.Mixed;
+                return s;
+            }
+        }
     }
 
     public bool Checked
@@ -83,5 +131,8 @@ public class MiuCheckBox : Control
                 g.DrawLines(pen, pts);
             }
         }
+
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(box, MiuTheme.Dp(2), MiuTheme.Dp(2)));
     }
 }

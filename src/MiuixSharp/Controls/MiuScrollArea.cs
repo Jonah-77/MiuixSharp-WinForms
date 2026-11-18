@@ -52,36 +52,56 @@ public class MiuScrollArea : Panel
     /// <summary>Attach the scrollable content.</summary>
     public void SetContent(Control content)
     {
-        if (_content != null) Controls.Remove(_content);
+        if (_content != null)
+        {
+            _content.ControlAdded -= OnContentStructureChanged;
+            _content.ControlRemoved -= OnContentStructureChanged;
+            Controls.Remove(_content);
+        }
         _content = content;
         if (content != null)
         {
             content.Dock = DockStyle.None;
             if (content is ScrollableControl sc) sc.AutoScroll = false;
             Controls.Add(content);
+            // Adding / removing rows inside the content is the normal way a list grows, so
+            // the area re-measures itself instead of relying on the caller remembering
+            // RefreshLayout(); the explicit call stays available.
+            content.ControlAdded += OnContentStructureChanged;
+            content.ControlRemoved += OnContentStructureChanged;
         }
         HookWheel(content);
         RefreshLayout();
     }
 
-    /// <summary>Re-measure the content and update the indicator. Call after rows change.</summary>
+    private void OnContentStructureChanged(object sender, ControlEventArgs e) => RefreshLayout();
+
+    private bool _relayouting;
+
+    /// <summary>Re-measure the content and update the indicator. Called automatically when rows change.</summary>
     public void RefreshLayout()
     {
-        if (_content == null) return;
+        // RefreshLayout adjusts the content's size, which raises layout events that can
+        // feed back into this method — the guard keeps it from recursing.
+        if (_content == null || _relayouting) return;
+        _relayouting = true;
+        try
+        {
+            bool scrollable = ContentHeight() > ClientSize.Height;
+            int gutter = scrollable ? GutterWidth : 0;
 
-        bool scrollable = ContentHeight() > ClientSize.Height;
-        int gutter = scrollable ? GutterWidth : 0;
+            _content.Width = Math.Max(60, ClientSize.Width - gutter);
+            _content.PerformLayout();
+            _content.Height = ContentHeight();
 
-        _content.Width = Math.Max(60, ClientSize.Width - gutter);
-        _content.PerformLayout();
-        _content.Height = ContentHeight();
+            int max = Math.Max(0, _content.Height - ClientSize.Height);
+            if (_offset > max) _offset = max;
+            _content.Top = -_offset;
 
-        int max = Math.Max(0, _content.Height - ClientSize.Height);
-        if (_offset > max) _offset = max;
-        _content.Top = -_offset;
-
-        HookWheel(_content);
-        Invalidate();
+            HookWheel(_content);
+            Invalidate();
+        }
+        finally { _relayouting = false; }
     }
 
     /// <summary>Total height the content needs.</summary>

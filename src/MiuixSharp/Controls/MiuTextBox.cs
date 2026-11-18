@@ -7,6 +7,8 @@ namespace MiuixSharp.Controls;
 /// TextField proportions. Kept as its own type so existing layouts that used it keep the
 /// oversized, loose shape while compact desktop rows can use <see cref="MiuInput"/> directly.
 /// </summary>
+[System.Drawing.ToolboxBitmap(typeof(MiuTextBox), "MiuixSharp.Icons.MiuTextBox.bmp")]
+[System.ComponentModel.Description("单行文本输入框")]
 public class MiuTextBox : MiuInput
 {
     public MiuTextBox()

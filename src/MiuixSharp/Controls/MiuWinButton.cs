@@ -13,6 +13,9 @@ namespace MiuixSharp.Controls;
 /// zero changes while painting a Miuix-style rounded surface.
 /// This is the compatibility bridge used to theme legacy WinForms apps.
 /// </summary>
+[System.Drawing.ToolboxBitmap(typeof(MiuWinButton), "MiuixSharp.Icons.MiuWinButton.bmp")]
+[System.ComponentModel.Description("可主题化的原生 Button，用于替换旧窗体里的系统按钮")]
+[System.ComponentModel.DefaultEvent("Click")]
 public class MiuWinButton : Button
 {
     private bool _hover, _pressed;
@@ -90,13 +93,23 @@ public class MiuWinButton : Button
         if (_pressed) back = RoundedPath.Blend(back == Color.Transparent ? MiuTheme.Surface : back, MiuTheme.Primary, 0.12);
         else if (_hover) back = RoundedPath.Blend(back == Color.Transparent ? MiuTheme.Surface : back, MiuTheme.Primary, 0.06);
 
+        // A stroke centred on the same path the Region clips is half-clipped: at 150% that
+        // renders as a dashed border. Fill with the full path, stroke one pixel inside it.
         using (var path = RoundedPath.Rect(rect, MiuTheme.Dp(_radius)))
         {
             if (back != Color.Transparent) using (var b = new SolidBrush(back)) g.FillPath(b, path);
-            if (border != Color.Transparent) using (var pen = new Pen(border, 1)) g.DrawPath(pen, path);
         }
+        var edge = new Rectangle(1, 1, Math.Max(0, rect.Width - 2), Math.Max(0, rect.Height - 2));
+        if (border != Color.Transparent && edge.Width > 2 && edge.Height > 2)
+            using (var path = RoundedPath.Rect(edge, Math.Max(3, MiuTheme.Dp(_radius) - 1)))
+            using (var pen = new Pen(border, 1))
+                g.DrawPath(pen, path);
         using var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
         using var tb = new SolidBrush(Enabled ? fore : MiuTheme.Colors.DisabledOnSurface);
         g.DrawString(Text, Font, tb, rect, sf);
+
+        // base.OnPaint is skipped, so the native focus frame never appears — draw our own.
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(rect, -MiuTheme.Dp(4), -MiuTheme.Dp(4)));
     }
 }

@@ -22,8 +22,19 @@ public class MiuChip : Control
         BackColor = Color.Transparent;
         Font = MiuTheme.FontSmall;
         ForeColor = MiuTheme.Text;
-        Height = 26;
-        MiuThemeHook.Attach(this, () => Invalidate());
+        AccessibleRole = AccessibleRole.StaticText;
+        ApplyMetrics();
+        MiuThemeHook.Attach(this, () => { ApplyMetrics(); Invalidate(); });
+    }
+
+    private int _autoHeight = -1;
+
+    /// <summary>Re-derives dp metrics in device pixels (DPI change / app-level zoom).</summary>
+    private void ApplyMetrics()
+    {
+        int h = MiuTheme.Dp(26);
+        if (_autoHeight < 0 || Height == _autoHeight) Height = h;
+        _autoHeight = h;
     }
 
     public MiuChipTone Tone { get => _tone; set { _tone = value; Invalidate(); } }
@@ -53,7 +64,7 @@ public class MiuChip : Control
         switch (_tone)
         {
             case MiuChipTone.Primary: back = MiuTheme.PrimaryContainer; fore = MiuTheme.OnPrimaryContainer; break;
-            case MiuChipTone.Success: back = Color.FromArgb(0xE3, 0xF4, 0xEA); fore = MiuTheme.Success; break;
+            case MiuChipTone.Success: back = RoundedPath.Blend(MiuTheme.SurfaceAlt, MiuTheme.Success, MiuTheme.IsDark ? 0.28 : 0.14); fore = MiuTheme.Success; break;
             case MiuChipTone.Warning: back = MiuTheme.WarningContainer; fore = MiuTheme.Warning; break;
             case MiuChipTone.Muted: back = MiuTheme.SurfaceAlt; fore = MiuTheme.TextSecondary; break;
             default: back = MiuTheme.SurfaceAlt; fore = MiuTheme.Text; break;

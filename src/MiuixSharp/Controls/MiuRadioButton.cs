@@ -18,7 +18,43 @@ public class MiuRadioButton : Control
         BackColor = Color.Transparent;
         Size = new Size(MiuTheme.Dp(20), MiuTheme.Dp(20));
         Cursor = Cursors.Hand;
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
+        AccessibleRole = AccessibleRole.RadioButton;
         MiuThemeHook.Attach(this, () => Invalidate());
+    }
+
+    protected override bool IsInputKey(Keys keyData) => keyData == Keys.Space || base.IsInputKey(keyData);
+
+    /// <summary>Selects this option as a real click would (keyboard / automation / default action).</summary>
+    public void PerformClick() => OnClick(EventArgs.Empty);
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Space)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            PerformClick();
+            return;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
+    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new MiuRadioAccessibleObject(this);
+
+    private sealed class MiuRadioAccessibleObject : ControlAccessibleObject
+    {
+        private readonly MiuRadioButton _owner;
+        public MiuRadioAccessibleObject(MiuRadioButton owner) : base(owner) => _owner = owner;
+        public override AccessibleRole Role => AccessibleRole.RadioButton;
+        public override string DefaultAction => "选择";
+        public override void DoDefaultAction() => _owner.Checked = true;
+        public override AccessibleStates State =>
+            base.State | (_owner.Checked ? AccessibleStates.Checked : AccessibleStates.None);
     }
 
     public bool Checked
@@ -52,5 +88,8 @@ public class MiuRadioButton : Control
             using var b = new SolidBrush(MiuTheme.Primary);
             g.FillEllipse(b, box.X + (box.Width - dot) / 2, box.Y + (box.Height - dot) / 2, dot, dot);
         }
+
+        if (Focused && ShowFocusCues)
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(box, MiuTheme.Dp(1), MiuTheme.Dp(1)));
     }
 }

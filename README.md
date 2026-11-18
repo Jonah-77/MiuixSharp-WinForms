@@ -239,6 +239,10 @@ src/MiuixSharp/
              Thumb (rounded image), ActionGrid (hand cursor on action columns),
              TitleBar (DWM title-bar recolouring)
 samples/MiuixSharp.Showcase/   Live demo used for the screenshots above
+samples/MiuixSharp.Demo/       Interactive capability demo: keyboard + focus ring, high
+                               contrast simulation, input widgets, progress, live theme
+                               switch, system accent, Mica backdrop, runtime zoom
+                               (`dotnet run --project samples/MiuixSharp.Demo [-- --dark]`)
 docs/REPRODUCTION.md           Fidelity audit
 docs/index.html                Feature page published to GitHub Pages
 docs/*.png                     Light & dark screenshots

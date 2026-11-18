@@ -55,13 +55,29 @@ public static class MiuTheme
     }
 
     /// <summary>Follow Windows high-contrast when the user turns it on (default).</summary>
+    /// <summary>Follow the system high-contrast theme (default on).</summary>
     public static bool RespectSystemHighContrast { get; set; } = true;
+
+    /// <summary>
+    /// Forces the high-contrast palette on (<c>true</c>) or off (<c>false</c>) regardless of the
+    /// Windows setting; <c>null</c> (default) follows the system. Handy for testing an app's
+    /// high-contrast rendering without changing the user's accessibility settings.
+    /// </summary>
+    public static bool? ForceHighContrast { get; set; }
+
+    /// <summary>Applies <see cref="ForceHighContrast"/> / the system setting and repaints.</summary>
+    public static void RefreshHighContrast()
+    {
+        MiuResources.Clear();
+        Changed?.Invoke(null, EventArgs.Empty);
+    }
 
     /// <summary>True when system colours are in force instead of the Miuix palette.</summary>
     public static bool IsHighContrast
     {
         get
         {
+            if (ForceHighContrast.HasValue) return ForceHighContrast.Value;
             if (!RespectSystemHighContrast) return false;
             try { return System.Windows.Forms.SystemInformation.HighContrast; } catch { return false; }
         }

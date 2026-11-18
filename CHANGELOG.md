@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.3
+
+**New API**
+
+- `MiuTheme.ForceHighContrast` (`bool?`) simulates (or hard-disables) high contrast without
+  touching the Windows setting: `true` / `false` override, `null` follows the OS as before.
+  `MiuTheme.RefreshHighContrast()` rebuilds the colour scheme and raises `Changed`.
+- `IsHighContrast` now resolves `ForceHighContrast` first and falls back to the system value.
+
+**New sample**
+
+- `samples/MiuixSharp.Demo` — an interactive capability demo: Tab order and focus rings, `Space`
+  toggling, slider arrow keys, high-contrast simulation, light/dark switch, system accent colour,
+  Mica backdrop request, and a 100 %–200 % zoom slider that re-derives every dp metric at runtime.
+  `dotnet run --project samples/MiuixSharp.Demo` (add `-- --dark` for the dark palette).
+
 ## 0.4.2
 
 Platform pass: the library now behaves like a citizen of Windows, not just a screenshot.

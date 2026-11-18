@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiuixSharp — 把 Miuix 的设计语言搬进 WinForms</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233482FF'/%3E%3Crect x='7' y='7' width='8' height='8' rx='3' fill='white'/%3E%3Crect x='17' y='17' width='8' height='8' rx='3' fill='white' opacity='.65'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
+<style>
+:root{
+  --primary:#3482FF; --on-primary:#FFFFFF; --primary-container:#5D9BFF;
+  --bg:#FFFFFF; --on-bg:#000000; --surface:#F7F7F7; --on-surface:#000000;
+  --surface-container:#FFFFFF; --secondary-container:#F0F0F0; --on-secondary-container:#A9A9A9;
+  --outline:#D9D9D9; --divider:#E0E0E0; --error:#E94634;
+  --muted:#6B6B6B; --summary: rgba(0,0,0,.6);
+  --sw-primary:#3482FF; --sw-primary-container:#5D9BFF; --sw-bg:#FFFFFF;
+  --sw-surface:#F7F7F7; --sw-surface-container:#FFFFFF; --sw-secondary-container:#F0F0F0;
+  --sw-on-surface:#000000; --sw-outline:#D9D9D9; --sw-divider:#E0E0E0;
+  --sw-error:#E94634; --sw-disabled:#B2B2B2; --sw-slider:rgba(0,0,0,.06);
+  --radius:16px; --radius-sm:12px; --radius-field:10px;
+  --scale:1;
+}
+[data-theme="dark"]{
+  --primary:#277AF7; --on-primary:#FFFFFF; --primary-container:#338FE4;
+  --bg:#242424; --on-bg:rgba(255,255,255,.9); --surface:#000000; --on-surface:#F2F2F2;
+  --surface-container:#242424; --secondary-container:#434343; --on-secondary-container:#7C7C7C;
+  --outline:#404040; --divider:#393939; --error:#F12522;
+  --muted:#959595; --summary: rgba(255,255,255,.5);
+  --sw-primary:#277AF7; --sw-primary-container:#338FE4; --sw-bg:#242424;
+  --sw-surface:#000000; --sw-surface-container:#242424; --sw-secondary-container:#434343;
+  --sw-on-surface:#F2F2F2; --sw-outline:#404040; --sw-divider:#393939;
+  --sw-error:#F12522; --sw-disabled:#666666; --sw-slider:rgba(255,255,255,.15);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--surface); color:var(--on-bg);
+  font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  font-size:16px; line-height:1.75; letter-spacing:.01em;
+  transition:background .25s ease,color .25s ease;
+}
+img{max-width:100%;display:block}
+a{color:var(--primary);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--primary) 35%,transparent)}
+a:hover{border-bottom-color:var(--primary)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--surface) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--divider)}
+.bar-in{display:flex;align-items:center;gap:16px;height:64px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.02em}
+.mark .dot{width:20px;height:20px;border-radius:7px;background:var(--primary);
+  display:grid;place-items:center;color:var(--on-primary);font-size:11px;font-weight:700}
+.bar .meta{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted)}
+.toggle{border:1px solid var(--outline);background:transparent;color:var(--on-bg);
+  border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;transition:background .2s}
+.toggle:hover{background:var(--secondary-container)}
+.toggle:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.toggle i{width:9px;height:9px;border-radius:50%;background:var(--primary)}
+
+/* ---------- 首屏 ---------- */
+.hero{padding:64px 0 40px}
+.eyebrow{font-size:13px;color:var(--muted);letter-spacing:.06em}
+h1{font-size:clamp(40px,7vw,76px);line-height:1.02;margin:14px 0 0;
+  font-weight:900;letter-spacing:-.03em}
+h1 .thin{font-weight:300;color:var(--muted)}
+.lede{margin:22px 0 0;max-width:34em;font-size:18px;line-height:1.85;color:var(--on-bg)}
+.facts{margin-top:34px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fact{background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);padding:18px 20px}
+.fact b{display:block;font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.fact span{font-size:13px;color:var(--muted)}
+.disclaim{margin-top:18px;font-size:13px;line-height:1.7;color:var(--muted);
+  border-left:2px solid var(--outline);padding-left:14px;max-width:46em}
+
+/* ---------- 截图 ---------- */
+.shots{padding:20px 0 8px}
+.shot-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+figure{margin:0;background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);padding:12px;overflow:hidden}
+figure img{border-radius:var(--radius-sm);border:1px solid var(--divider)}
+figcaption{margin-top:10px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+figure a{display:block;border-bottom:none;cursor:zoom-in}
+
+/* ---------- 通用节 ---------- */
+section{padding:56px 0}
+h2{font-size:clamp(24px,3.4vw,34px);line-height:1.25;margin:0;font-weight:700;letter-spacing:-.02em}
+.sub{margin:10px 0 0;color:var(--summary);max-width:40em;font-size:15px}
+.rule{height:1px;background:var(--divider);margin:40px 0 0}
+
+/* ---------- 三族 ---------- */
+.fam{display:grid;gap:14px;margin-top:28px}
+.fam-card{background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);padding:22px 24px}
+.fam-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.fam-head h3{margin:0;font-size:17px;font-weight:700}
+.tag{font-size:12px;color:var(--muted);border:1px solid var(--outline);
+  border-radius:999px;padding:2px 10px}
+.fam p{margin:10px 0 14px;font-size:14px;color:var(--summary);max-width:52em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13px;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  background:var(--secondary-container);color:var(--on-bg);
+  border-radius:999px;padding:5px 12px}
+.chip.on{background:var(--primary-container);color:var(--on-primary)}
+
+/* ---------- 配色表 ---------- */
+.table-wrap{margin-top:26px;border:1px solid var(--outline);border-radius:var(--radius);overflow:hidden;background:var(--surface-container)}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
+colgroup col:nth-child(1){width:36%}
+colgroup col:nth-child(2){width:12%}
+colgroup col:nth-child(3){width:14%}
+colgroup col:nth-child(4){width:22%}
+colgroup col:nth-child(5){width:16%}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--divider);vertical-align:middle}
+td:nth-child(3),td:nth-child(4){text-align:right}
+th{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.04em;background:var(--secondary-container)}
+td:last-child,th:last-child{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:13px}
+.sw{width:26px;height:26px;border-radius:8px;border:1px solid var(--outline);display:inline-block;vertical-align:middle}
+.hex-light,.hex-dark{display:inline}
+[data-theme="dark"] .hex-light{color:var(--muted);opacity:.55}
+[data-theme="light"] .hex-dark{color:var(--muted);opacity:.55}
+.note{font-size:13px;color:var(--muted);margin-top:12px}
+
+/* ---------- DPI / 缩放 ---------- */
+.dpi{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:24px;margin-top:28px;align-items:start}
+.dpi-list{background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);padding:22px 24px}
+.dpi-list table{font-size:13.5px;overflow-wrap:anywhere}
+.dpi-list table col:nth-child(1){width:30%}
+.dpi-list table col:nth-child(2){width:70%}
+.dpi-list td:nth-child(3),.dpi-list td:nth-child(4){text-align:left}
+.dpi-list th{background:transparent;padding-left:0}
+.dpi-list td{padding-left:0}
+
+.demo{background:var(--surface-container);border:1px solid var(--outline);border-radius:var(--radius);padding:22px}
+.demo-stage{background:var(--surface);border:1px solid var(--divider);
+  border-radius:calc(var(--radius-field) * var(--scale));padding:calc(14px * var(--scale));
+  display:flex;align-items:center;gap:calc(12px * var(--scale));min-height:calc(96px * var(--scale));
+  transition:padding .18s ease,border-radius .18s ease}
+.demo-btn{background:var(--primary);color:var(--on-primary);
+  border-radius:calc(16px * var(--scale));height:calc(40px * var(--scale));
+  padding:0 calc(20px * var(--scale));display:inline-flex;align-items:center;
+  font-size:calc(15px * var(--scale));white-space:nowrap;transition:all .18s ease}
+.demo-chip{background:var(--secondary-container);color:var(--on-bg);
+  border-radius:999px;padding:calc(4px * var(--scale)) calc(12px * var(--scale));
+  font-size:calc(13px * var(--scale));transition:all .18s ease}
+.demo-side{width:calc(26px * var(--scale));height:calc(26px * var(--scale));
+  border-radius:50%;background:var(--primary);transition:all .18s ease}
+.demo-ctl{margin-top:18px;display:flex;align-items:center;gap:14px}
+.demo-ctl label{font-size:13px;color:var(--muted);white-space:nowrap}
+input[type=range]{flex:1;accent-color:var(--primary);height:22px}
+.out{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:13px;
+  min-width:74px;text-align:right;color:var(--on-bg)}
+
+/* ---------- 边界 ---------- */
+.limits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:26px}
+.limit{background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);padding:18px 20px}
+.limit h4{margin:0 0 6px;font-size:15px;font-weight:500}
+.limit p{margin:0;font-size:13.5px;color:var(--summary);line-height:1.7}
+
+/* ---------- 安装 ---------- */
+.code{margin-top:22px;background:var(--surface-container);border:1px solid var(--outline);
+  border-radius:var(--radius);overflow:hidden}
+.code-bar{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--divider)}
+.code-bar span{width:9px;height:9px;border-radius:50%;background:var(--outline)}
+pre{margin:0;padding:20px;overflow-x:auto;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  font-size:13.5px;line-height:1.8;color:var(--on-bg)}
+pre .c{color:var(--muted)}
+
+footer{padding:48px 0 72px;color:var(--muted);font-size:13px;line-height:1.8}
+footer .rule{margin:0 0 28px}
+
+@media (max-width:860px){
+  .shot-grid,.dpi,.limits,.facts{grid-template-columns:minmax(0,1fr)}
+  .bar-in{flex-wrap:wrap;height:auto;padding:12px 0;gap:10px}
+  .hero{padding:44px 0 28px}
+  section{padding:44px 0}
+  td,th{padding:10px 12px}
+  .table-wrap{overflow-x:auto}
+  .table-wrap table{min-width:560px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="mark"><span class="dot">M</span>MiuixSharp</div>
+    <div class="meta">
+      <span>0.4.0 · MIT</span>
+      <button class="toggle" id="themeBtn" aria-pressed="false">
+        <i></i><span id="themeLabel">深色</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== 首屏 ===== -->
+<div class="wrap hero">
+  <div class="eyebrow">.NET 8 · WinForms · 零依赖</div>
+  <h1>Miuix<span class="thin">Sharp</span></h1>
+  <p class="lede">用纯 C# 把 Miuix 的视觉设计语言搬进 WinForms：圆角容器、分层灰面、单一强调色，51 个具名颜色角色与 14 种文字样式，全部照着官方规格独立写就。</p>
+
+  <div class="facts">
+    <div class="fact"><b>24</b><span>个自绘控件，分三族</span></div>
+    <div class="fact"><b>51</b><span>个颜色角色，浅深两套</span></div>
+    <div class="fact"><b>1.0–5.0</b><span>倍缩放，跟随显示器 DPI</span></div>
+  </div>
+
+  <p class="disclaim">非官方项目。Miuix 是 Kotlin / Jetpack Compose 库，无法在 .NET 中引用；这里的每一行 C# 都是照着文档里的视觉规格重写的，没有搬运源码。设计与署名归 Miuix 作者所有。</p>
+</div>
+
+<!-- ===== 实拍 ===== -->
+<div class="wrap shots">
+  <div class="shot-grid">
+    <figure>
+      <a href="showcase_light.png" target="_blank" rel="noopener" title="点击看原图 1020×1230"><img src="showcase_light.png" alt="MiuixSharp 示例程序浅色主题实拍，六张卡片展示按钮、输入、标签、选择控件、图标与列表"></a>
+      <figcaption><span>浅色 · Light</span><span>100% / 96 dpi</span></figcaption>
+    </figure>
+    <figure>
+      <a href="showcase_dark.png" target="_blank" rel="noopener" title="点击看原图 1020×1230"><img src="showcase_dark.png" alt="MiuixSharp 示例程序深色主题实拍"></a>
+      <figcaption><span>深色 · Dark</span><span>100% / 96 dpi</span></figcaption>
+    </figure>
+  </div>
+  <p class="note">两张都是示例程序 <span class="mono">samples/MiuixSharp.Showcase</span> 的真实窗口截图，右上角的按钮在运行中就能切深浅色。点图可看 1020×1230 原图。</p>
+</div>
+
+<!-- ===== 控件三族 ===== -->
+<section>
+  <div class="wrap">
+    <h2>控件分成三族</h2>
+    <p class="sub">这个库不是“把 WinForms 控件换皮”，而是按“Miuix 有没有对应物”分成三族。分族决定了每个控件的基类，也决定了它以后能不能被删。</p>
+
+    <div class="fam">
+      <div class="fam-card">
+        <div class="fam-head"><h3>第一族 · 官方有对应物，直接复刻</h3><span class="tag">14</span></div>
+        <p>对应 Miuix 里有文档、有默认值的组件，度量逐项照抄：按钮高 40dp、卡片圆角 16dp、滑块 28dp、分隔线 0.75dp。</p>
+        <div class="chips">
+          <span class="chip">MiuButton</span><span class="chip">MiuWinButton</span><span class="chip">MiuCard</span>
+          <span class="chip">MiuSurface</span><span class="chip">MiuSwitch</span><span class="chip">MiuCheckBox</span>
+          <span class="chip">MiuRadioButton</span><span class="chip">MiuSlider</span><span class="chip">MiuDivider</span>
+          <span class="chip">MiuChip</span><span class="chip">MiuIconButton</span><span class="chip">MiuProgressIndicator</span>
+          <span class="chip">MiuGrid</span><span class="chip">MiuTextBox</span>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="fam-head"><h3>第二族 · 有语义、WinForms 没有，推导出来的输入族</h3><span class="tag">6</span></div>
+        <p>Miuix 的文本输入是<b>一个</b>圆角容器，下拉 / 日期 / 数字都是它的变体；WinForms 里这是四个各有方角的控件。所以外壳与编辑器分离：一个 <span class="mono">MiuField</span> 壳 + 四种编辑器。</p>
+        <div class="chips">
+          <span class="chip on">MiuField</span><span class="chip on">MiuInput</span><span class="chip on">MiuComboBox</span>
+          <span class="chip on">MiuNumberBox</span><span class="chip on">MiuDateBox</span><span class="chip on">MiuPopup</span>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="fam-head"><h3>第三族 · Windows 特有的“系统外观”，只能替换掉</h3><span class="tag">5</span></div>
+        <p>Miuix 里完全没有对应物 —— 它们是平台问题，不是设计问题：系统滚动条的方角箭头、标题栏的 DWM 配色、DataGridView 抢走的光标、PictureBox 的黑角。</p>
+        <div class="chips">
+          <span class="chip">MiuScrollArea</span><span class="chip">MiuLogList</span><span class="chip">MiuThumb</span>
+          <span class="chip">MiuActionGrid</span><span class="chip">MiuTitleBar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap"><div class="rule"></div></div>
+</section>
+
+<!-- ===== 配色 ===== -->
+<section>
+  <div class="wrap">
+    <h2>配色是照抄的，不是调出来的</h2>
+    <p class="sub">51 个具名角色，浅深各一套，值逐项取自 Miuix 官方 <span class="mono">docs/guide/colors.md</span>。下面这些色块会跟着右上角的开关实时变化 —— 换的就是库里那套值。</p>
+
+    <div class="table-wrap">
+      <table>
+        <colgroup><col><col><col><col><col></colgroup>
+        <thead>
+          <tr><th>角色</th><th>色块</th><th>浅色</th><th>深色</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">primary</td><td><span class="sw" style="background:var(--sw-primary)"></span></td><td class="hex-light mono">#3482FF</td><td class="hex-dark mono">#277AF7</td><td>强调色</td></tr>
+          <tr><td class="mono">primaryContainer</td><td><span class="sw" style="background:var(--sw-primary-container)"></span></td><td class="hex-light mono">#5D9BFF</td><td class="hex-dark mono">#338FE4</td><td>柔和按钮</td></tr>
+          <tr><td class="mono">background</td><td><span class="sw" style="background:var(--sw-bg)"></span></td><td class="hex-light mono">#FFFFFF</td><td class="hex-dark mono">#242424</td><td>页面底</td></tr>
+          <tr><td class="mono">surface</td><td><span class="sw" style="background:var(--sw-surface)"></span></td><td class="hex-light mono">#F7F7F7</td><td class="hex-dark mono">#000000</td><td>卡片底</td></tr>
+          <tr><td class="mono">surfaceContainer</td><td><span class="sw" style="background:var(--sw-surface-container)"></span></td><td class="hex-light mono">#FFFFFF</td><td class="hex-dark mono">#242424</td><td>卡片/弹层</td></tr>
+          <tr><td class="mono">secondaryContainer</td><td><span class="sw" style="background:var(--sw-secondary-container)"></span></td><td class="hex-light mono">#F0F0F0</td><td class="hex-dark mono">#434343</td><td>输入框底</td></tr>
+          <tr><td class="mono">onSurface</td><td><span class="sw" style="background:var(--sw-on-surface)"></span></td><td class="hex-light mono">#000000</td><td class="hex-dark mono">#F2F2F2</td><td>正文</td></tr>
+          <tr><td class="mono">outline</td><td><span class="sw" style="background:var(--sw-outline)"></span></td><td class="hex-light mono">#D9D9D9</td><td class="hex-dark mono">#404040</td><td>描边</td></tr>
+          <tr><td class="mono">dividerLine</td><td><span class="sw" style="background:var(--sw-divider)"></span></td><td class="hex-light mono">#E0E0E0</td><td class="hex-dark mono">#393939</td><td>分隔线</td></tr>
+          <tr><td class="mono">error</td><td><span class="sw" style="background:var(--sw-error)"></span></td><td class="hex-light mono">#E94634</td><td class="hex-dark mono">#F12522</td><td>警示琥珀</td></tr>
+          <tr><td class="mono">disabledOnSurface</td><td><span class="sw" style="background:var(--sw-disabled)"></span></td><td class="hex-light mono">#B2B2B2</td><td class="hex-dark mono">#666666</td><td>禁用文字</td></tr>
+          <tr><td class="mono">sliderBackground</td><td><span class="sw" style="background:var(--sw-slider)"></span></td><td class="hex-light mono">#0F000000</td><td class="hex-dark mono">#26FFFFFF</td><td>滑块底轨</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">上面 12 个是最常用的角色，仓库里一共 51 个（含 hover / pressed / pressedContainer 等状态色）。全库唯一的“彩色”是 primary 一族 —— 想换品牌色只设一个种子色，其余明度阶梯自动派生，但永远只有一个强调色。</p>
+  </div>
+  <div class="wrap"><div class="rule"></div></div>
+</section>
+
+<!-- ===== DPI ===== -->
+<section>
+  <div class="wrap">
+    <h2>度量是 dp，不是像素</h2>
+    <p class="sub">Miuix 的度量单位是 dp。WinForms 画的是设备像素，所以换算只在绘制那一刻发生 —— 这样换台显示器、换个缩放比例，圆角和字才对得上，而不是被系统拉伸成糊的位图。</p>
+
+    <div class="dpi">
+      <div class="dpi-list">
+        <table>
+          <colgroup><col><col></colgroup>
+          <thead><tr><th>项</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>基准</td><td>96 dpi = 1.0，就是截图的样子</td></tr>
+            <tr><td>范围</td><td>1.0 – 5.0（100% – 500%）</td></tr>
+            <tr><td>取整</td><td>四舍五入，下限 1px</td></tr>
+            <tr><td>线宽</td><td>下限 0.75px，0.75dp 分隔线不消失</td></tr>
+            <tr><td>字体</td><td>用 pt，由系统随 DPI 放大</td></tr>
+            <tr><td>窗口</td><td>尺寸也按 dp 给，否则 150% 下内容撑破窗口</td></tr>
+            <tr><td>跟随</td><td>MiuDpi.Watch(form) 挂 DpiChanged</td></tr>
+            <tr><td>缩放</td><td>低于 1.0 不提供：Windows 本身也做不到</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="demo">
+        <div class="demo-stage">
+          <span class="demo-btn">主色按钮</span>
+          <span class="demo-chip">已回收</span>
+          <span class="demo-side"></span>
+        </div>
+        <div class="demo-ctl">
+          <label for="scaleRange">缩放</label>
+          <input id="scaleRange" type="range" min="100" max="200" step="5" value="100" aria-label="缩放比例">
+          <span class="out" id="scaleOut">100%</span>
+        </div>
+        <p class="note">拖动看 16dp 圆角、40dp 按钮高度、字一起等比变化 —— 库里的 <span class="mono">MiuTheme.Dp()</span> 做的就是这件事。</p>
+      </div>
+    </div>
+  </div>
+  <div class="wrap"><div class="rule"></div></div>
+</section>
+
+<!-- ===== 边界 ===== -->
+<section>
+  <div class="wrap">
+    <h2>它不是什么</h2>
+    <p class="sub">这条线在仓库里写在明处：做不到的不假装实现，判定不做的不偷偷做一半。</p>
+    <div class="limits">
+      <div class="limit"><h4>不是 Miuix 的 C# 移植</h4><p>Miuix 是 Kotlin / Compose，跑不到 .NET 上。这里每行 C# 都是照视觉规格独立写的。</p></div>
+      <div class="limit"><h4>不是完整 UI 框架</h4><p>没有布局引擎、没有导航栈。只做“把 WinForms 控件换成 Miuix 长相”的替换件集合。</p></div>
+      <div class="limit"><h4>不做毛玻璃</h4><p>Glass 系列要 SetWindowCompositionAttribute，兼容性差。仓库里明确写“有意不做”，而不是做个假的。</p></div>
+      <div class="limit"><h4>没有 Preference 组件</h4><p>设置页要自己用 Card + Switch 拼。加一层 API 价值不高，不如不加。</p></div>
+    </div>
+  </div>
+  <div class="wrap"><div class="rule"></div></div>
+</section>
+
+<!-- ===== 安装 ===== -->
+<section>
+  <div class="wrap">
+    <h2>接入只要一个引用</h2>
+    <p class="sub">零第三方依赖，不用图标字体，全部 GDI+ 手绘。目标是 .NET 8 + WinForms。</p>
+    <div class="code">
+      <div class="code-bar"><span></span><span></span><span></span></div>
+<pre><span class="c"># 编译 DLL</span>
+dotnet build -c Release src/MiuixSharp/MiuixSharp.csproj
+
+<span class="c">&lt;!-- 或者在项目里直接引用 --&gt;</span>
+&lt;ItemGroup&gt;
+  &lt;ProjectReference Include="..\_miuixsharp\src\MiuixSharp\MiuixSharp.csproj" /&gt;
+&lt;/ItemGroup&gt;</pre>
+    </div>
+    <p class="note">写代码时记住两条：颜色只在 OnPaint 里读 <span class="mono">MiuTheme.Colors</span>；半径和线宽一律走 <span class="mono">MiuTheme.Dp()</span>。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="rule"></div>
+    <p>本库代码 MIT。设计语言来自 Apache-2.0 的 Miuix（作者 yukonga 及贡献者），本项目不复制其源码，仅复现视觉规格。<br>
+    Miuix / Xiaomi / HyperOS / MIUI 为各自权利人商标，此处仅用于说明设计来源。非官方项目，无关联、无背书。</p>
+    <p class="note">页面里的截图来自示例程序的真实窗口；配色数值取自官方文档；缩放演示是用 CSS 复现同一套 dp 规则，不是运行中的 WinForms。</p>
+  </div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  var root=document.documentElement,
+      btn=document.getElementById('themeBtn'),
+      label=document.getElementById('themeLabel');
+
+  function applyTheme(t){
+    root.setAttribute('data-theme',t);
+    label.textContent = t==='dark' ? '浅色' : '深色';
+    btn.setAttribute('aria-pressed', t==='dark' ? 'true':'false');
+    try{ localStorage.setItem('miuix-theme',t); }catch(e){}
+  }
+
+  var saved=null;
+  try{ saved=localStorage.getItem('miuix-theme'); }catch(e){}
+  applyTheme(saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+  btn.addEventListener('click',function(){
+    applyTheme(root.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+  });
+
+  var range=document.getElementById('scaleRange'),
+      out=document.getElementById('scaleOut'),
+      stage=document.querySelector('.demo-stage');
+
+  range.addEventListener('input',function(){
+    var s=Number(range.value)/100;
+    document.documentElement.style.setProperty('--scale', s);
+    out.textContent = range.value + '%';
+  });
+})();
+</script>
+</body>
+</html>
+

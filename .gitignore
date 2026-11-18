@@ -1,0 +1,25 @@
+## Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+## Local helper scripts (not part of the library)
+_shot.py

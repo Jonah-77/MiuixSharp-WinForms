@@ -26,6 +26,14 @@ public static class MiuTheme
     private static TonalPalette _palette = new(_seed);
     private static bool _monet;
 
+    // The seed the app asked for, kept apart from the seed currently applied. Switching to the
+    // system accent overwrites _seed; without this copy, switching back would hand the system
+    // colour to the "seed" palette too and the toggle would look dead from the 3rd click on.
+    private static Color _seedPreferred = Color.FromArgb(0x34, 0x82, 0xFF);
+    // Whether seed derivation was on before we borrowed the system accent, so returning to
+    // Seed restores the official scheme for apps that never set a seed.
+    private static bool _monetPreferred;
+
     private static readonly Font _font = new("Microsoft YaHei", 9F);
     private static readonly Font _fontSm = new("Microsoft YaHei", 8.25F);
     private static readonly Font _fontLg = new("Microsoft YaHei", 12F, FontStyle.Bold);
@@ -146,8 +154,23 @@ public static class MiuTheme
         get => _accentSource;
         set
         {
-            _accentSource = value;
-            if (value == MiuAccentSource.System) Seed = ReadSystemAccent();
+            if (value == MiuAccentSource.System)
+            {
+                // Borrow the Windows accent, remembering what to go back to.
+                if (_accentSource != MiuAccentSource.System) _monetPreferred = _monet;
+                _accentSource = MiuAccentSource.System;
+                _seed = ReadSystemAccent();
+                _monet = true;
+                RebuildMonet();
+                return;
+            }
+
+            // Back to the app's own seed: restore both the colour and the derivation mode.
+            _accentSource = MiuAccentSource.Seed;
+            _seed = _seedPreferred;
+            _monet = _monetPreferred;
+            if (_monet) RebuildMonet();
+            else UseOfficialScheme();
         }
     }
 
@@ -178,13 +201,25 @@ public static class MiuTheme
     public static Color Seed
     {
         get => _seed;
-        set { _seed = value; _monet = true; RebuildMonet(); }
+        set
+        {
+            _seed = value;
+            _seedPreferred = value;   // remember it, so the system accent cannot overwrite the app's own seed
+            _monet = true;
+            _monetPreferred = true;
+            if (_accentSource == MiuAccentSource.System) _accentSource = MiuAccentSource.Seed;   // an explicit seed means "use my seed"
+            RebuildMonet();
+        }
     }
 
     /// <summary>Use the exact official Miuix color scheme (no seed derivation).</summary>
     public static void UseOfficialScheme()
     {
+        // Asking for the official scheme is also a statement about where colour comes from:
+        // stop following the Windows accent, otherwise the next system change would undo it.
+        _accentSource = MiuAccentSource.Seed;
         _monet = false;
+        _monetPreferred = false;
         _light = MiuColorScheme.Light();
         _dark = MiuColorScheme.Dark();
         Changed?.Invoke(null, EventArgs.Empty);

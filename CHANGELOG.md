@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.5
+
+**Fixed**
+
+- Switching the accent source back to the app's own seed did nothing after the first round trip.
+  `AccentSource = System` used to write the Windows accent straight into the same `Seed` field the
+  palette derives from, so "back to Seed" handed the *system* colour to the seed palette again: from
+  the third click on, every toggle produced an identical colour and the control looked dead.
+  `MiuTheme` now keeps the requested seed apart from the applied one, and restoring `Seed` puts both
+  the colour and the derivation mode back (official scheme included, for apps that never set a seed).
+- Setting `Seed` explicitly while following the system accent now switches the source back to
+  `Seed`, instead of leaving the app claiming to follow Windows while ignoring it.
+- `UseOfficialScheme()` stops following the Windows accent; previously a later personalisation
+  change would silently overwrite the official palette.
+
+**New**
+
+- `MiuixSharp.Demo.exe --accent=system` starts with the Windows accent colour, so the two palettes
+  can be compared without clicking. Default stays on the seed colour.
+
+**Notes**
+
+- `AccentSource` is still a plain static property; both directions now repaint through the existing
+  `Changed` event, so controls need no extra wiring.
+
 ## 0.4.4
 
 Rounded-corner rendering fixes for the `Button`-derived control, reported from a real 150 %

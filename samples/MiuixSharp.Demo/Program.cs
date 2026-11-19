@@ -6,7 +6,7 @@ using MiuixSharp.Theme;
 namespace MiuixSharp.Demo;
 
 /// <summary>
-/// Live demo of MiuixSharp 0.4.4: the interactive surface on top, then the parts a screenshot
+/// Live demo of MiuixSharp 0.4.5: the interactive surface on top, then the parts a screenshot
 /// cannot show — keyboard focus, high-contrast mapping, live metric recalculation, and the
 /// window-frame integration.
 /// </summary>
@@ -17,12 +17,14 @@ internal static class Program
     {
         ApplicationConfiguration.Initialize();
         // Optional switches, handy for screenshots and quick checks:
-        //   --dark     start in the dark palette
-        //   --system   follow the Windows app theme
+        //   --dark            start in the dark palette
+        //   --system          follow the Windows app theme
+        //   --accent=system   start with the Windows accent colour (default is the seed colour)
         foreach (var a in Environment.GetCommandLineArgs())
         {
             if (a.Equals("--dark", StringComparison.OrdinalIgnoreCase)) MiuTheme.Mode = MiuMode.Dark;
             if (a.Equals("--system", StringComparison.OrdinalIgnoreCase)) MiuTheme.Mode = MiuMode.System;
+            if (a.Equals("--accent=system", StringComparison.OrdinalIgnoreCase)) MiuTheme.AccentSource = MiuAccentSource.System;
         }
         Application.Run(new DemoForm());
     }
@@ -91,7 +93,7 @@ internal sealed class DemoForm : Form
         AutoScaleMode = AutoScaleMode.None;
         KeyPreview = true;
 
-        _head.Text = "MiuixSharp 0.4.4";
+        _head.Text = "MiuixSharp 0.4.5";
         _head.Font = new Font(MiuTheme.Font.FontFamily, 18F, FontStyle.Bold);
         _head.ForeColor = MiuTheme.Text;
         _hint.Text = "Tab 轮换焦点 · 空格激活勾选/开关/按钮 · 方向键调滑块 · 下面还能改缩放、开高对比";

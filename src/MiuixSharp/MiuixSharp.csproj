@@ -12,7 +12,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <AssemblyName>MiuixSharp</AssemblyName>
     <RootNamespace>MiuixSharp</RootNamespace>
-    <Version>0.4.3</Version>
+    <Version>0.4.4</Version>
     <Authors>MiuixSharp contributors</Authors>
     <Description>A modern, Miuix-inspired control library for WinForms on .NET. Rounded cards, tonal colors, squircle corners.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

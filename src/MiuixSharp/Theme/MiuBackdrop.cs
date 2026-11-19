@@ -70,4 +70,28 @@ public static class MiuBackdrop
         MiuTheme.Changed += onTheme;
         if (form.IsHandleCreated) ApplyNow();
     }
+
+    /// <summary>
+    /// Best-effort colour of whatever sits behind <paramref name="control"/>, for self-painted
+    /// controls that must prime their buffer before drawing an anti-aliased shape.
+    ///
+    /// <para>
+    /// <c>BackColor</c> alone is not enough: <see cref="MiuixSharp.Controls.MiuCard"/> and
+    /// <see cref="MiuixSharp.Controls.MiuSurface"/> paint <see cref="MiuTheme.Surface"/> but
+    /// report <c>Color.Transparent</c>, so a pure BackColor walk lands on the outer window and
+    /// leaves a pale crescent outside the rounded corners. Known Miuix containers therefore
+    /// answer with <see cref="MiuTheme.Surface"/> directly.
+    /// </para>
+    /// </summary>
+    public static Color ResolveColor(Control control)
+    {
+        for (Control p = control?.Parent; p != null; p = p.Parent)
+        {
+            if (p is MiuixSharp.Controls.MiuSurface || p is MiuixSharp.Controls.MiuCard)
+                return MiuTheme.Surface;
+            if (p.BackColor.A == 255)
+                return p.BackColor;
+        }
+        return MiuTheme.Surface;
+    }
 }

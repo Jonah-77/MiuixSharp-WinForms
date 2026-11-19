@@ -6,7 +6,7 @@ using MiuixSharp.Theme;
 namespace MiuixSharp.Demo;
 
 /// <summary>
-/// Live demo of MiuixSharp 0.4.3: the interactive surface on top, then the parts a screenshot
+/// Live demo of MiuixSharp 0.4.4: the interactive surface on top, then the parts a screenshot
 /// cannot show — keyboard focus, high-contrast mapping, live metric recalculation, and the
 /// window-frame integration.
 /// </summary>
@@ -59,6 +59,9 @@ internal sealed class DemoForm : Form
     private readonly MiuRadioButton _r2 = new();
     private readonly Label _lRadio = new();
     private readonly MiuChip _chip = new() { Text = "已回收", Tone = MiuChipTone.Success };
+    // Derives from Button (legacy compatible) — here so the rounded corners and the 1 px
+    // outline of that code path can be inspected at 150 % zoom next to the plain MiuButton.
+    private readonly MiuWinButton _bWin = new() { Text = "原生按钮", MiuStyle = MiuButtonStyle.Outlined };
     private readonly MiuSlider _slider = new() { Value = 60 };
     private readonly Label _lValue = new();
 
@@ -88,7 +91,7 @@ internal sealed class DemoForm : Form
         AutoScaleMode = AutoScaleMode.None;
         KeyPreview = true;
 
-        _head.Text = "MiuixSharp 0.4.3";
+        _head.Text = "MiuixSharp 0.4.4";
         _head.Font = new Font(MiuTheme.Font.FontFamily, 18F, FontStyle.Bold);
         _head.ForeColor = MiuTheme.Text;
         _hint.Text = "Tab 轮换焦点 · 空格激活勾选/开关/按钮 · 方向键调滑块 · 下面还能改缩放、开高对比";
@@ -219,7 +222,7 @@ internal sealed class DemoForm : Form
         _c1.Controls.AddRange(new Control[]
         {
             _bFilled, _bOutlined, _icon, _switch, _lSwitch, _check, _lCheck,
-            _r1, _r2, _lRadio, _chip, _slider, _lValue,
+            _r1, _r2, _lRadio, _chip, _slider, _lValue, _bWin,
         });
         _lSwitch.Text = "开关";
         _lCheck.Text = "勾选";
@@ -293,6 +296,7 @@ internal sealed class DemoForm : Form
         At(_c1, _r2, 186, title + 64, 20, 20);
         At(_c1, _lRadio, 216, title + 62, 90, 24);
         At(_c1, _chip, 330, title + 62, 80, 26);
+        At(_c1, _bWin, 430, title + 58, 130, 32);
         At(_c1, _slider, 20, title + 96, 380, 28);
         At(_c1, _lValue, 410, title + 96, 120, 24);
         At(_c1, _c1.Controls["focusBtn"], 540, title + 88, 150, 36);

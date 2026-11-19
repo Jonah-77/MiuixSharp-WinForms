@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.4
+
+Rounded-corner rendering fixes for the `Button`-derived control, reported from a real 150 %
+PerMonitorV2 app. Nothing else changed; no API removed.
+
+**Fixed**
+
+- `MiuWinButton` no longer draws a 1 px dark ring along its rounded outline at >100 % DPI.
+  Two independent causes, both fixed: `ButtonBase` keeps `ControlStyles.Opaque` on, so the
+  buffer was never erased and the antialiased edge composited against black; the paint now
+  disables `Opaque`, primes `ClientRectangle` with the parent colour, and re-syncs `BackColor`
+  on `OnParentChanged` / `OnHandleCreated` / theme change.
+- Rounded corners are no longer clipped by `Region`. `MiuWinButton` and `MiuSurface` used to
+  assign `Region = new Region(roundedPath)`, which steps every antialiased pixel into a hard
+  edge ("frayed" corners at 150 %) and also cut the outer half of an edge-centred stroke. Both
+  controls now paint the backdrop themselves instead of clipping, so curves stay smooth.
+
+**New**
+
+- `MiuBackdrop.ResolveColor(Control)` — walks the parent chain to the colour actually behind a
+  self-painted control; `MiuCard` / `MiuSurface` answer `MiuTheme.Surface` because their own
+  `BackColor` is `Transparent` (a pure `BackColor` walk would reach the outer window and leave a
+  pale crescent outside the corners).
+
+**Notes**
+
+- A control that relied on `Region` for corner hit-testing now has square hit bounds again; the
+  painted corners are still round. This matches how `MiuCard` always behaved.
+
 ## 0.4.3
 
 **New API**

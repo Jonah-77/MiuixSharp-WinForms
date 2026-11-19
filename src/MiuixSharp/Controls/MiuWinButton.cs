@@ -27,28 +27,30 @@ public class MiuWinButton : Button
     {
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        // ButtonBase turns Opaque ON: it never erases its buffer, expecting the native frame
+        // to paint it. We skip that frame, so the buffer stays black and the anti-aliased
+        // edge blends against it — the 1 px dark ring along the rounded outline at >100 % DPI.
+        SetStyle(ControlStyles.Opaque, false);
         FlatStyle = FlatStyle.Flat;
         FlatAppearance.BorderSize = 0;
         Font = MiuTheme.Font;
         Cursor = Cursors.Hand;
         Padding = new Padding(6, 0, 6, 0);
-        MiuThemeHook.Attach(this, () => Invalidate());
-        // Clip to rounded region so no native square focus frame / corners leak through.
-        HandleCreated += (_, __) => ApplyRegion();
-        Resize += (_, __) => ApplyRegion();
+        BackColor = MiuTheme.Surface;
+        MiuThemeHook.Attach(this, () => { SyncBackdrop(); Invalidate(); });
     }
 
-    private void ApplyRegion()
-    {
-        if (Width <= 0 || Height <= 0) return;
-        using var path = RoundedPath.Rect(new Rectangle(0, 0, Width - 1, Height - 1), MiuTheme.Dp(_radius));
-        Region?.Dispose();
-        Region = new Region(path);
-    }
+    // No Region any more: a Region clips FillPath's anti-aliased edge into hard pixel steps,
+    // which is what made the rounded corners look frayed. The backdrop fill below already
+    // covers the area outside the path, so the corners blend with the parent instead.
+    private void SyncBackdrop() => BackColor = MiuBackdrop.ResolveColor(this);
+
+    protected override void OnParentChanged(EventArgs e) { base.OnParentChanged(e); SyncBackdrop(); }
+    protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SyncBackdrop(); }
 
     /// <summary>Corner radius in pixels. Default 8.</summary>
     [DefaultValue(8)]
-    public int Radius { get => _radius; set { _radius = value; ApplyRegion(); Invalidate(); } }
+    public int Radius { get => _radius; set { _radius = value; Invalidate(); } }
 
     public MiuButtonStyle MiuStyle
     {
@@ -75,6 +77,11 @@ public class MiuWinButton : Button
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
         var rect = new Rectangle(0, 0, Width - 1, Height - 1);
         if (rect.Width <= 0 || rect.Height <= 0) return;
+
+        // Prime the buffer with the parent's colour before any curve is drawn: without it the
+        // anti-aliased edge composites against whatever was left in the buffer (black).
+        using (var bg = new SolidBrush(MiuBackdrop.ResolveColor(this)))
+            g.FillRectangle(bg, ClientRectangle);
 
         Color back, fore, border;
         if (_forcedBack.HasValue) { back = _forcedBack.Value; fore = _forcedFore ?? MiuTheme.Text; border = _forcedBorder ?? Color.Transparent; }

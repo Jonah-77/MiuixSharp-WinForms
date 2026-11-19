@@ -22,29 +22,18 @@ public class MiuSurface : Panel
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
         BackColor = Color.Transparent;
         MiuThemeHook.Attach(this, () => Invalidate());
-        UpdateRegion();
     }
 
-    public int Radius { get => _radius; set { _radius = value; UpdateRegion(); Invalidate(); } }
+    public int Radius { get => _radius; set { _radius = value; Invalidate(); } }
     public bool ShowOutline { get => _outline; set { _outline = value; Invalidate(); } }
 
-    /// <summary>
-    /// Clip the control to its rounded shape. Without this the areas outside the rounded
-    /// corners keep whatever was painted before, which shows up as black corner artefacts
-    /// on top of a light parent surface.
-    /// </summary>
-    protected override void OnResize(EventArgs e)
+    // No Region any more: clipping to a rounded Region steps every anti-aliased corner into
+    // hard pixels (a frayed edge at 150 %). The backdrop fill below covers the area outside the
+    // path instead, so the corners blend with the parent surface.
+    protected override void OnPaintBackground(PaintEventArgs e)
     {
-        base.OnResize(e);
-        UpdateRegion();
-    }
-
-    private void UpdateRegion()
-    {
-        if (Width < 2 || Height < 2) return;
-        // ApplyRegion disposes the previous Region; assigning Region directly leaks a GDI
-        // region on every resize.
-        RoundedPath.ApplyRegion(this, MiuTheme.Dp(_radius));
+        using var b = new SolidBrush(MiuBackdrop.ResolveColor(this));
+        e.Graphics.FillRectangle(b, ClientRectangle);
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -58,8 +47,8 @@ public class MiuSurface : Panel
             using var b = new SolidBrush(MiuTheme.Surface);
             g.FillPath(b, path);
         }
-        // The control clips itself to a rounded Region, so an edge-centred stroke is half
-        // clipped (dashed outline at 150%). Stroke one pixel inside the fill instead.
+        // Stroke one pixel inside the fill so the 1 px outline is never half-covered by the
+        // anti-aliased edge of the fill path.
         if (_outline)
         {
             var edge = new Rectangle(1, 1, Math.Max(0, rect.Width - 2), Math.Max(0, rect.Height - 2));
@@ -70,6 +59,4 @@ public class MiuSurface : Panel
         }
         base.OnPaint(e);
     }
-
-    protected override void OnPaintBackground(PaintEventArgs e) { /* transparent */ }
 }

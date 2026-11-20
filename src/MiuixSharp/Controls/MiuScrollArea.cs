@@ -21,6 +21,13 @@ public class MiuScrollArea : Panel
 {
     private const int GutterWidth = 12;   // dp
     private const int ThumbWidth = 6;     // dp
+    /// <summary>
+    /// Miuix <c>ScrollBarDefaults.TouchTargetWidth</c> (24dp since upstream cut it down from 48dp).
+    /// The drag lane never grows past the gutter: this host reserves the strip next to the content
+    /// instead of overlaying it, so taking the full 24dp would swallow clicks along the list's right
+    /// edge — the very thing upstream shrank the target to stop.
+    /// </summary>
+    private const int TouchTargetWidth = 24;  // dp
 
     private Control _content;
     private int _offset;
@@ -163,8 +170,10 @@ public class MiuScrollArea : Panel
     {
         base.OnMouseDown(e);
         if (e.Button != MouseButtons.Left) return;
-        var thumb = ThumbRect();
-        if (!thumb.IsEmpty && thumb.Contains(e.Location))
+        // The whole lane grabs the drag, not just the 6dp indicator: upstream keeps a touch target
+        // wider than the painted thumb for exactly this reason.
+        var lane = DragLane();
+        if (!lane.IsEmpty && lane.Contains(e.Location))
         {
             _dragging = true;
             _dragAnchorY = e.Y;
@@ -213,6 +222,20 @@ public class MiuScrollArea : Panel
         using (var path = RoundedPath.Rect(thumb, thumb.Width / 2))
         using (var b = new SolidBrush(ThumbColor))
             g.FillPath(b, path);
+    }
+
+    /// <summary>
+    /// The strip that grabs a drag: the gutter, capped at <see cref="TouchTargetWidth"/>. Empty when
+    /// the content fits, so a short list never swallows clicks on its right edge.
+    /// </summary>
+    private Rectangle DragLane()
+    {
+        if (_content == null) return Rectangle.Empty;
+        int max = Math.Max(0, _content.Height - ClientSize.Height);
+        if (max <= 0) return Rectangle.Empty;
+
+        int lane = Math.Max(ThumbWidth, Math.Min(TouchTargetWidth, GutterWidth));
+        return new Rectangle(ClientSize.Width - lane, 2, lane, Math.Max(1, ClientSize.Height - 4));
     }
 
     /// <summary>Geometry of the scroll indicator.</summary>

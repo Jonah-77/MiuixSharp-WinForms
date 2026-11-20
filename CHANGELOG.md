@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.6
+
+**Fixed**
+
+- `MiuScrollArea` only accepted a drag on the painted indicator itself, so grabbing a long list by
+  the scrollbar took a 6dp-accurate click. The strip beside the content now starts the drag, like
+  Miuix's `ScrollBarDefaults.TouchTargetWidth`. Upstream cut that target from 48dp to 24dp so a wide
+  bar stopped swallowing the list's right edge; this host already reserves a gutter instead of
+  overlaying the content, so the drag lane is capped at the gutter and never reaches into the list.
+
 ## 0.4.5
 
 **Fixed**
